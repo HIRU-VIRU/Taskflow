@@ -5,9 +5,10 @@ import bcrypt from 'bcryptjs';
 export class UserRepository {
   private tableName = 'users';
 
-  async create(data: CreateUserDTO): Promise<User> {
+  async create(data: CreateUserDTO, trx?: any): Promise<User> {
     const passwordHash = await bcrypt.hash(data.password, 10);
-    const [user] = await db(this.tableName)
+    const query = trx ? trx(this.tableName) : db(this.tableName);
+    const [user] = await query
       .insert({
         tenant_id: data.tenant_id,
         email: data.email,

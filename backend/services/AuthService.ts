@@ -48,7 +48,7 @@ export class AuthService {
         password: data.adminPassword,
         name: data.adminName,
         role: 'admin',
-      });
+      }, trx);
 
       // 3. Create Free subscription
       const subscription = await subscriptionRepository.create(

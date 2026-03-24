@@ -1,4 +1,5 @@
 import express, { Express } from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
@@ -14,8 +15,16 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
-app.use(rateLimiter);
+// CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Default Vite dev server port
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Rate limiting (60 second window, 100 requests max)
+app.use(rateLimiter({ windowMs: 60 * 1000, max: 100 }));
 
 // API Routes
 app.use('/api', routes);

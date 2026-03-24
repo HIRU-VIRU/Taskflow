@@ -30,6 +30,7 @@ export class AuthController {
         data: result,
       });
     } catch (error) {
+      console.error('Registration error:', error);
       const err = error as Error;
       if (err.message.includes('already exists')) {
         res.status(409).json({
