@@ -1,4 +1,4 @@
-import { db } from './src/config/database';
+import { db } from '../backend/config/database';
 
 async function testDatabaseConnection() {
   console.log('🔍 Testing database connection...');

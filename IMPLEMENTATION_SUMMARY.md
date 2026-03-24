@@ -152,13 +152,13 @@ npm run dev
 
 ## 🔥 Critical Components
 
-### EntitlementService (src/services/EntitlementService.ts)
+### EntitlementService (backend/services/EntitlementService.ts)
 - **Single point of enforcement** for all subscription logic
 - 3-step validation: subscription status → feature access → usage limits
 - Built-in caching to reduce database load
 - Cache invalidation on subscription changes
 
-### Entitlement Middleware (src/middleware/entitlementMiddleware.ts)
+### Entitlement Middleware (backend/middleware/entitlementMiddleware.ts)
 ```typescript
 requireEntitlement(feature: string, usageKey?: string)
 ```
@@ -166,7 +166,7 @@ requireEntitlement(feature: string, usageKey?: string)
 - Calls EntitlementService.check()
 - Returns 403 on failure with specific error codes
 
-### Usage Tracking (src/repositories/UsageTrackingRepository.ts)
+### Usage Tracking (backend/repositories/UsageTrackingRepository.ts)
 - Atomic increment/decrement operations
 - Transaction support for consistency
 - Row locking prevents race conditions

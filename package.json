@@ -4,20 +4,22 @@
   "description": "Multi-tenant Project Management SaaS with Subscription & Feature Entitlement System",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "debug": "ts-node-dev --respawn --transpile-only src/index-debug.ts",
+    "dev": "ts-node-dev --respawn --transpile-only backend/index.ts",
+    "debug": "ts-node-dev --respawn --transpile-only backend/index-debug.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate": "knex migrate:latest",
-    "migrate:rollback": "knex migrate:rollback",
-    "seed": "knex seed:run",
+    "migrate": "knex migrate:latest --knexfile scripts/knexfile.ts",
+    "migrate:rollback": "knex migrate:rollback --knexfile scripts/knexfile.ts",
+    "seed": "knex seed:run --knexfile scripts/knexfile.ts",
     "frontend:install": "cd frontend && npm install",
     "frontend:dev": "cd frontend && npm run dev",
     "frontend:build": "cd frontend && npm run build",
     "frontend:preview": "cd frontend && npm run preview",
-    "dev:all": "concurrently \"npm run dev\" \"npm run frontend:dev\"",
     "install:all": "npm install && npm run frontend:install",
-    "build:all": "npm run build && npm run frontend:build"
+    "build:all": "npm run build && npm run frontend:build",
+    "db:start": "docker run --name taskflow-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=taskflow -p 5432:5432 -d postgres:16-alpine",
+    "db:stop": "docker stop taskflow-db && docker rm taskflow-db",
+    "db:setup": "npm run migrate && npm run seed"
   },
   "keywords": [
     "saas",
@@ -43,7 +45,6 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.11.24",
     "@types/uuid": "^9.0.8",
-    "concurrently": "^9.2.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"
   },

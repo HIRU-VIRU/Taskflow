@@ -1,12 +1,12 @@
 #!/bin/bash
 
 echo "🔍 Checking for existing TaskFlow processes..."
-PIDS=$(pgrep -f "ts-node-dev.*src/index.ts")
+PIDS=$(pgrep -f "ts-node-dev.*backend/index.ts")
 
 if [ ! -z "$PIDS" ]; then
   echo "Found existing processes: $PIDS"
   echo "🛑 Stopping existing TaskFlow server..."
-  pkill -f "ts-node-dev.*src/index.ts"
+  pkill -f "ts-node-dev.*backend/index.ts"
   sleep 2
   echo "✅ Processes stopped"
 else

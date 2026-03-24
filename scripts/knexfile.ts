@@ -19,11 +19,11 @@ const config: { [key: string]: Knex.Config } = {
       max: 10,
     },
     migrations: {
-      directory: path.join(__dirname, 'src/database/migrations'),
+      directory: path.join(__dirname, '../backend/database/migrations'),
       extension: 'ts',
     },
     seeds: {
-      directory: path.join(__dirname, 'src/database/seeds'),
+      directory: path.join(__dirname, '../backend/database/seeds'),
       extension: 'ts',
     },
   },
@@ -35,11 +35,11 @@ const config: { [key: string]: Knex.Config } = {
       max: 10,
     },
     migrations: {
-      directory: path.join(__dirname, 'src/database/migrations'),
+      directory: path.join(__dirname, '../backend/database/migrations'),
       extension: 'ts',
     },
     seeds: {
-      directory: path.join(__dirname, 'src/database/seeds'),
+      directory: path.join(__dirname, '../backend/database/seeds'),
       extension: 'ts',
     },
   },
