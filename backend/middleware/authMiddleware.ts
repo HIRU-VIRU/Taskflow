@@ -32,7 +32,7 @@ export const authMiddleware = async (
       const payload = authService.verifyToken(token);
 
       // Attach user info to request
-      req.user = {
+      (req as any).user = {
         id: payload.userId,
         email: payload.email,
         role: payload.role,

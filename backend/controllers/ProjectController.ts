@@ -9,8 +9,8 @@ export class ProjectController {
    */
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = req.user!.tenantId;
-      const userId = req.user!.id;
+      const tenantId = (req as any).user!.tenantId;
+      const userId = (req as any).user!.id;
       const data: CreateProjectDTO = req.body;
 
       if (!data.name) {
@@ -59,7 +59,7 @@ export class ProjectController {
    */
   async list(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = req.user!.tenantId;
+      const tenantId = (req as any).user!.tenantId;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
 
@@ -86,7 +86,7 @@ export class ProjectController {
    */
   async getById(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = req.user!.tenantId;
+      const tenantId = (req as any).user!.tenantId;
       const projectId = req.params.projectId;
 
       const project = await projectService.getById(tenantId, projectId);
@@ -123,7 +123,7 @@ export class ProjectController {
    */
   async update(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = req.user!.tenantId;
+      const tenantId = (req as any).user!.tenantId;
       const projectId = req.params.projectId;
       const data = req.body;
 
@@ -161,7 +161,7 @@ export class ProjectController {
    */
   async delete(req: Request, res: Response): Promise<void> {
     try {
-      const tenantId = req.user!.tenantId;
+      const tenantId = (req as any).user!.tenantId;
       const projectId = req.params.projectId;
 
       const success = await projectService.delete(tenantId, projectId);
