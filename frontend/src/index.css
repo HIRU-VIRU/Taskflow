@@ -8,13 +8,116 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Segoe UI', Roboto, sans-serif;
+html {
+  min-height: 100vh;
 }
 
-html,
-body,
+body {
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  background-color: #f9fafb;
+  color: #111827;
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 #root {
-  height: 100%;
+  min-height: 100vh;
   width: 100%;
+}
+
+/* Loading spinner styles */
+.loading-spinner {
+  @apply inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin;
+}
+
+/* Prevent flash of unstyled content */
+.dashboard-container {
+  min-height: calc(100vh - 4rem);
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.dashboard-container.loading {
+  opacity: 0.7;
+}
+
+/* Admin section specific styles */
+.admin-section {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+}
+
+.admin-section h2 {
+  @apply text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2;
+}
+
+.admin-section h3 {
+  @apply font-medium text-gray-700 mb-3;
+}
+
+.admin-section p {
+  @apply text-gray-600;
+}
+
+/* User list styles */
+.user-item {
+  @apply flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-100;
+}
+
+.user-item .user-info {
+  @apply flex-grow;
+}
+
+.user-item .user-name {
+  @apply font-medium text-gray-900;
+}
+
+.user-item .user-email {
+  @apply text-sm text-gray-600;
+}
+
+.user-item .user-role {
+  @apply px-2 py-1 text-xs rounded font-medium;
+}
+
+.user-item .user-role.admin {
+  @apply bg-red-100 text-red-800;
+}
+
+.user-item .user-role.member {
+  @apply bg-blue-100 text-blue-800;
+}
+
+/* Plan card styles */
+.plan-card {
+  @apply border rounded-lg p-4 bg-white;
+}
+
+.plan-card .plan-header {
+  @apply flex justify-between items-start mb-2;
+}
+
+.plan-card .plan-name {
+  @apply font-semibold text-gray-900;
+}
+
+.plan-card .plan-price {
+  @apply text-lg font-bold text-green-600;
+}
+
+.plan-card .plan-description {
+  @apply text-sm text-gray-600 mb-3;
+}
+
+.plan-card .plan-features {
+  @apply text-sm;
+}
+
+.plan-card .plan-features ul {
+  @apply list-disc list-inside text-gray-600 space-y-1;
+}
+
+.plan-card .plan-limits ul {
+  @apply text-gray-600 space-y-1;
 }

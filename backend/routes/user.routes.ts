@@ -34,6 +34,13 @@ router.get('/', (req, res) => userController.list(req, res));
 router.get('/:userId', (req, res) => userController.getById(req, res));
 
 /**
+ * PUT /api/users/:userId
+ * Update user profile
+ * Users can update their own profile, admins can update any user
+ */
+router.put('/:userId', (req, res) => userController.update(req, res));
+
+/**
  * DELETE /api/users/:userId
  * Remove user from tenant (admin only)
  */

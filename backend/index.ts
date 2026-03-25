@@ -23,8 +23,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Rate limiting (60 second window, 100 requests max)
-app.use(rateLimiter({ windowMs: 60 * 1000, max: 100 }));
+// Rate limiting - Disabled in development
+if (process.env.NODE_ENV === 'production') {
+  app.use(rateLimiter({ windowMs: 60 * 1000, max: 100 }));
+}
 
 // API Routes
 app.use('/api', routes);

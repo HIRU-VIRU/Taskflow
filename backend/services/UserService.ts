@@ -76,6 +76,38 @@ export class UserService {
   }
 
   /**
+   * Update user profile
+   */
+  async update(
+    tenantId: string,
+    userId: string,
+    data: { name?: string; email?: string }
+  ): Promise<UserResponse | null> {
+    // Check if email already exists (if updating email)
+    if (data.email) {
+      const existingUser = await userRepository.findByEmail(data.email, tenantId);
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('User with this email already exists in this organization');
+      }
+    }
+
+    const updatedUser = await userRepository.update(userId, tenantId, data);
+
+    if (!updatedUser) {
+      return null;
+    }
+
+    return {
+      id: updatedUser.id,
+      tenant_id: updatedUser.tenant_id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      role: updatedUser.role,
+      created_at: updatedUser.created_at,
+    };
+  }
+
+  /**
    * Remove user from tenant
    */
   async remove(tenantId: string, userId: string): Promise<boolean> {

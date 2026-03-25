@@ -97,7 +97,7 @@ export class AuthController {
    */
   async me(req: Request, res: Response): Promise<void> {
     try {
-      const user = (req as any).user!;
+      const user = req.user!; // Now properly typed thanks to express type extensions
 
       res.status(200).json({
         success: true,

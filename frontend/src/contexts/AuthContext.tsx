@@ -9,6 +9,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
   login: (data: LoginRequest) => Promise<void>;
   logout: () => void;
@@ -26,44 +27,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize auth state from localStorage on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const storedToken = tokenUtils.getToken();
-        if (storedToken) {
-          // Check if token is expired
-          if (tokenUtils.isTokenExpired(storedToken)) {
-            tokenUtils.clearAll();
-          } else {
-            setToken(storedToken);
-            // Could optionally fetch user details here
-            // For now, we trust the token
-          }
-        }
-      } catch (err) {
-        console.error('Failed to initialize auth:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initAuth();
-  }, []);
-
-  // Listen for auth errors from API interceptor
-  useEffect(() => {
-    const handleAuthError = (event: any) => {
-      if (event.detail?.code === 'UNAUTHORIZED') {
-        logout();
-      }
-    };
-
-    window.addEventListener('authError', handleAuthError);
-    return () => window.removeEventListener('authError', handleAuthError);
+  // Define logout first so it can be used in useEffects
+  const logout = useCallback(() => {
+    setUser(null);
+    setTenant(null);
+    setToken(null);
+    setError(null);
+    tokenUtils.clearAll();
   }, []);
 
   const login = useCallback(async (data: LoginRequest) => {
@@ -110,17 +84,72 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    setTenant(null);
-    setToken(null);
-    setError(null);
-    tokenUtils.clearAll();
-  }, []);
-
   const isAdmin = useCallback(() => {
     return user?.role === 'admin';
   }, [user]);
+
+  // Initialize auth state from localStorage on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const storedToken = tokenUtils.getToken();
+        const storedTenantId = tokenUtils.getTenantId();
+        const storedUserId = tokenUtils.getUserId();
+
+        if (storedToken && storedTenantId && storedUserId) {
+          // Check if token is expired
+          if (tokenUtils.isTokenExpired(storedToken)) {
+            tokenUtils.clearAll();
+          } else {
+            setToken(storedToken);
+
+            // Try to get user info from API to ensure token is still valid
+            try {
+              const response = await fetch('/api/auth/me', {
+                headers: {
+                  'Authorization': `Bearer ${storedToken}`,
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                setUser(data.user);
+                setTenant(data.tenant);
+              } else {
+                // Token invalid, clear storage
+                tokenUtils.clearAll();
+                setToken(null);
+              }
+            } catch (err) {
+              console.error('Failed to validate token:', err);
+              // Keep token but don't fail initialization
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to initialize auth:', err);
+        tokenUtils.clearAll();
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  // Listen for auth errors from API interceptor
+  useEffect(() => {
+    const handleAuthError = (event: any) => {
+      if (event.detail?.code === 'UNAUTHORIZED') {
+        console.log('Auth error detected, logging out user');
+        logout();
+      }
+    };
+
+    window.addEventListener('authError', handleAuthError);
+    return () => window.removeEventListener('authError', handleAuthError);
+  }, [logout]);
 
   const value: AuthContextType = {
     user,
@@ -128,6 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     token,
     isAuthenticated: !!token && !!user,
     isLoading,
+    isInitialized,
     error,
     login,
     logout,

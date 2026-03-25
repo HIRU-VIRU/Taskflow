@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/AuthService';
+import { AuthUser } from '../types';
 
 /**
  * Authentication Middleware
@@ -31,13 +32,15 @@ export const authMiddleware = async (
     try {
       const payload = authService.verifyToken(token);
 
-      // Attach user info to request
-      (req as any).user = {
+      // Attach user info to request with proper typing
+      const user: AuthUser = {
         id: payload.userId,
         email: payload.email,
         role: payload.role,
         tenantId: payload.tenantId,
       };
+
+      req.user = user;
 
       next();
     } catch {

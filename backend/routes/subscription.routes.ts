@@ -6,13 +6,7 @@ import { tenantContextMiddleware } from '../middleware/tenantContextMiddleware';
 
 const router = Router();
 
-/**
- * GET /api/plans
- * List all available plans (public)
- */
-router.get('/plans', (req, res) => subscriptionController.listPlans(req, res));
-
-// Protected routes
+// All subscription routes require authentication and tenant context
 router.use(authMiddleware);
 router.use(tenantContextMiddleware);
 

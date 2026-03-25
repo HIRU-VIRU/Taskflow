@@ -1,6 +1,6 @@
 # TaskFlow - Multi-Tenant Project Management SaaS
 
-A production-ready multi-tenant Project Management SaaS application built as a **monorepo** with a Node.js/Express/TypeScript backend and React/TypeScript frontend. Features subscription-based access control with feature entitlements and usage limits.
+A production-ready multi-tenant Project Management SaaS application with independent backend and frontend projects. Features subscription-based access control with feature entitlements and usage limits.
 
 ## 🎯 Features
 
@@ -12,12 +12,16 @@ A production-ready multi-tenant Project Management SaaS application built as a *
 - **Rate Limiting**: Per-tenant request throttling
 - **Clean Architecture**: Controller → Service → Repository pattern
 - **Modern Frontend**: React 18 with TypeScript, Tailwind CSS, and React Router
+- **CORS Enabled**: Cross-origin requests supported for frontend-backend communication
 
-## 📁 Monorepo Structure
+## 📁 Project Structure
 
 ```
 Taskflow/
-├── backend/                # Backend source code
+├── backend/                # Backend Node.js/Express API
+│   ├── node_modules/       # Backend dependencies (separate)
+│   ├── package.json        # Backend package configuration
+│   ├── tsconfig.json       # Backend TypeScript config
 │   ├── config/             # Database & env configuration
 │   ├── controllers/        # Request handlers
 │   ├── middleware/         # Express middleware
@@ -26,11 +30,9 @@ Taskflow/
 │   ├── routes/             # API routes
 │   ├── database/           # Migrations & seeds
 │   └── types/              # TypeScript types
-├── scripts/                # Build & utility scripts
-│   ├── knexfile.ts         # Database configuration
-│   ├── restart-server.sh   # Server restart utility
-│   └── test-*.ts           # Testing utilities
 ├── frontend/               # React frontend application
+│   ├── node_modules/       # Frontend dependencies (separate)
+│   ├── package.json        # Frontend package configuration
 │   ├── src/
 │   │   ├── api/            # API client & services
 │   │   ├── components/     # Reusable UI components
@@ -39,12 +41,51 @@ Taskflow/
 │   │   ├── pages/          # Page components
 │   │   ├── types/          # TypeScript types
 │   │   └── utils/          # Utility functions
-│   ├── public/             # Static assets
-│   └── package.json        # Frontend dependencies
+│   └── public/             # Static assets
+├── scripts/                # Database scripts
+│   ├── knexfile.ts         # Database configuration
+│   └── migrations & seeds  # Database setup files
 ├── documents/              # Documentation
-├── package.json            # Root package.json with monorepo scripts
+├── package.json            # Root package.json (scripts only, no deps)
 └── README.md               # This file
 ```
+
+### 🏗️ Clean Architecture
+
+- **Root folder**: Clean with no `node_modules` - only management scripts
+- **Backend**: Independent with its own dependencies in `backend/node_modules/`
+- **Frontend**: Independent with its own dependencies in `frontend/node_modules/`
+- **Separation**: Each project manages its own dependencies and configurations
+
+## 🔄 Project Structure Changes
+
+This project was restructured from a workspace-based monorepo to independent projects for better dependency isolation:
+
+### Before (Workspace Monorepo)
+```
+├── node_modules/           # Root dependencies (confusing)
+├── package.json            # Workspace config with dependencies
+├── backend/                # No package.json
+└── frontend/               # Own package.json
+```
+
+### After (Clean Independent Structure)
+```
+├── package.json            # Scripts only, no dependencies
+├── backend/
+│   ├── package.json        # Backend-specific dependencies
+│   └── node_modules/       # Backend dependencies only
+└── frontend/
+    ├── package.json        # Frontend dependencies
+    └── node_modules/       # Frontend dependencies only
+```
+
+### Benefits
+- ✅ **Clean root**: No dependency pollution in project root
+- ✅ **True isolation**: Each project manages its own dependencies
+- ✅ **Easier deployment**: Backend and frontend can be deployed independently
+- ✅ **Better debugging**: Clear dependency boundaries
+- ✅ **Simpler CI/CD**: Build each project separately
 
 ## 🚀 Quick Start
 
@@ -54,20 +95,30 @@ Taskflow/
 - Docker (for PostgreSQL)
 - Git
 
-### 1. Clone and Install
+### 1. Clone and Install Dependencies
 
 ```bash
 git clone https://github.com/HIRU-VIRU/Taskflow.git
 cd Taskflow
 
-# Install all dependencies (backend + frontend)
+# Install backend dependencies
+npm run backend:install
+# OR: cd backend && npm install
+
+# Install frontend dependencies
+npm run frontend:install
+# OR: cd frontend && npm install
+
+# Install both with one command
 npm run install:all
 ```
 
-### 2. Start PostgreSQL with Docker
+### 2. Database Setup
+
+#### Start PostgreSQL with Docker
 
 ```bash
-# Start PostgreSQL container
+# Start PostgreSQL container (first time)
 npm run db:start
 
 # This runs:
@@ -78,14 +129,43 @@ npm run db:start
 #   -p 5432:5432 -d postgres:16-alpine
 ```
 
+#### Database Troubleshooting
+
+**If you get "container name already in use" error:**
+
+```bash
+# Check if container exists but is stopped
+docker ps -a | grep taskflow-db
+
+# Start existing container
+docker start taskflow-db
+
+# OR remove and recreate (loses data)
+docker rm taskflow-db
+npm run db:start
+```
+
+**Check database status:**
+
+```bash
+# Check if container is running
+docker ps | grep taskflow-db
+
+# View database logs
+docker logs taskflow-db --tail 10
+
+# Connect to database (optional)
+docker exec -it taskflow-db psql -U postgres -d taskflow
+```
+
 ### 3. Environment Setup
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-The default `.env` works with Docker PostgreSQL:
+The default `backend/.env` works with Docker PostgreSQL:
 
 ```env
 NODE_ENV=development
@@ -110,16 +190,18 @@ RATE_LIMIT_MAX=100
 # Run migrations and seed data
 npm run db:setup
 
-# Or run separately:
-npm run migrate
-npm run seed
+# Or run from backend directory:
+cd backend && npm run migrate && npm run seed
 ```
 
 ### 5. Start Development Servers
 
+**Option A: Using root scripts**
+
 **Terminal 1 - Backend (port 3000):**
 ```bash
 npm run dev
+# OR: npm run backend:dev
 ```
 
 **Terminal 2 - Frontend (port 5173):**
@@ -127,46 +209,153 @@ npm run dev
 npm run frontend:dev
 ```
 
+**Option B: Starting from directories**
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+npm run dev
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
 ### 6. Access the Application
 
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3000/api
+- **CORS**: Enabled for localhost:5173 → localhost:3000 requests
 
 ## 🛠️ Available Scripts
 
-### Backend Commands
+### Root Management Scripts
 
 ```bash
-npm run dev              # Start backend dev server
-npm run build            # Build TypeScript
-npm start                # Start production server
-npm run migrate          # Run database migrations
-npm run migrate:rollback # Rollback last migration
-npm run seed             # Seed initial data
+npm run backend:install    # Install backend dependencies
+npm run backend:dev        # Start backend development server
+npm run backend:build      # Build backend for production
+npm run backend:start      # Start backend production server
+
+npm run frontend:install   # Install frontend dependencies
+npm run frontend:dev       # Start frontend development server
+npm run frontend:build     # Build frontend for production
+npm run frontend:preview   # Preview frontend production build
+
+npm run install:all        # Install both backend + frontend dependencies
+npm run build:all          # Build both projects for production
+
+npm run dev                # Start backend (shorthand)
+
+# Database Management Scripts
+npm run db:start           # Start PostgreSQL container (create or start existing)
+npm run db:stop            # Stop PostgreSQL container (keeps data)
+npm run db:setup           # Run migrations + seeds (setup database schema)
 ```
 
-### Frontend Commands
+### Backend Commands (from `backend/` directory)
 
 ```bash
-npm run frontend:install  # Install frontend dependencies
-npm run frontend:dev      # Run frontend dev server
-npm run frontend:build    # Build frontend for production
-npm run frontend:preview  # Preview production build
+cd backend
+
+npm run dev                # Start development server with hot reload
+npm run debug              # Start with debug mode
+npm run build              # Build TypeScript to JavaScript
+npm run start              # Start production server (requires build)
+npm run migrate            # Run database migrations
+npm run migrate:rollback   # Rollback last migration
+npm run seed               # Seed initial data
 ```
 
-### Database Commands (Docker)
+### Frontend Commands (from `frontend/` directory)
 
 ```bash
-npm run db:start         # Start PostgreSQL container
-npm run db:stop          # Stop and remove container
-npm run db:setup         # Run migrations + seeds
+cd frontend
+
+npm run dev                # Start Vite development server
+npm run build              # Build for production
+npm run preview            # Preview production build locally
+npm run lint               # Lint code with ESLint
 ```
 
-### Monorepo Commands
+### Database Management
+
+#### Quick Start/Stop Commands
 
 ```bash
-npm run install:all      # Install backend + frontend dependencies
-npm run build:all        # Build backend + frontend for production
+# Start database (creates new or starts existing container)
+npm run db:start
+# OR manually:
+# docker start taskflow-db (if container exists)
+
+# Stop database (keeps container and data)
+npm run db:stop
+# OR manually:
+# docker stop taskflow-db
+
+# Setup database schema and initial data
+npm run db:setup
+```
+
+#### Database Container Management
+
+```bash
+# Check container status
+docker ps -a | grep taskflow-db
+
+# Start existing stopped container
+docker start taskflow-db
+
+# Stop running container
+docker stop taskflow-db
+
+# Remove container completely (loses all data)
+docker rm taskflow-db
+
+# View container logs
+docker logs taskflow-db --tail 20
+
+# Connect to database shell
+docker exec -it taskflow-db psql -U postgres -d taskflow
+```
+
+#### Database Schema Management
+
+```bash
+# Run from project root
+npm run db:setup           # Run migrations + seeds
+
+# OR run from backend/ directory
+cd backend
+npm run migrate            # Run pending migrations
+npm run migrate:rollback   # Rollback last migration batch
+npm run seed               # Run seed files (plans, features, etc.)
+```
+
+#### Common Database Issues
+
+**Connection Refused Error:**
+1. Check if container is running: `docker ps | grep taskflow-db`
+2. Start container if stopped: `docker start taskflow-db`
+3. Wait 5-10 seconds for database to be ready
+4. Check logs: `docker logs taskflow-db --tail 10`
+
+**Container Name Conflicts:**
+```bash
+# If you get "container name already in use"
+docker rm taskflow-db     # Remove existing container
+npm run db:start          # Create new container
+npm run db:setup          # Setup schema and data
+```
+
+**Reset Database Completely:**
+```bash
+docker stop taskflow-db
+docker rm taskflow-db
+npm run db:start
+npm run db:setup
 ```
 
 ## 📊 Default Plans
@@ -213,9 +402,14 @@ npm run build:all        # Build backend + frontend for production
 ## 🧪 Quick Test
 
 ```bash
+# Make sure servers are running:
+# Terminal 1: npm run dev (backend)
+# Terminal 2: npm run frontend:dev (frontend)
+
 # Register a tenant
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
+  -H "Origin: http://localhost:5173" \
   -d '{
     "tenantName": "Test Corp",
     "tenantSlug": "test-corp",
@@ -227,23 +421,33 @@ curl -X POST http://localhost:3000/api/auth/register \
 # Login
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
+  -H "Origin: http://localhost:5173" \
   -d '{
     "email": "admin@test.com",
     "password": "password123",
     "tenantSlug": "test-corp"
   }'
+
+# Test CORS preflight (should return 204)
+curl -X OPTIONS http://localhost:3000/api/auth/register \
+  -H "Origin: http://localhost:5173" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: Content-Type,Authorization"
 ```
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    React Frontend (SPA)                      │
+│                React Frontend (port 5173)                   │
+│              Vite Dev Server + Tailwind CSS                 │
 └─────────────────────────────────────────────────────────────┘
                               │
+                      CORS Enabled (Origin: localhost:5173)
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│       Express API (Rate Limiter → Auth → Entitlement)        │
+│       Express API (port 3000)                               │
+│   Rate Limiter → CORS → Auth → Entitlement                 │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -257,14 +461,23 @@ curl -X POST http://localhost:3000/api/auth/login \
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### Key Features
+- **Independent Projects**: Backend and frontend run as separate services
+- **CORS Configuration**: Proper cross-origin setup for development
+- **JWT Authentication**: Stateless authentication with Bearer tokens
+- **Tenant Isolation**: Complete data separation per tenant
+- **Feature Entitlements**: Dynamic feature gating based on subscription plans
+
 ## 🔒 Security
 
-- JWT-based authentication
-- Password hashing with bcrypt
-- Tenant isolation at database layer
-- Rate limiting per tenant
-- Input validation with Zod
-- SQL injection prevention
+- JWT-based authentication with configurable expiration
+- Password hashing with bcrypt (10 rounds)
+- Tenant isolation at database layer (all queries include tenant_id)
+- Rate limiting per tenant (configurable limits)
+- Input validation with Zod schemas
+- SQL injection prevention with parameterized queries
+- CORS protection with origin whitelisting
+- Request timeout protection (10 second default)
 
 ## 📄 License
 

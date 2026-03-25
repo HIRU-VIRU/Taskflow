@@ -22,8 +22,14 @@ export const PlansPage: React.FC = () => {
   const fetchPlans = async () => {
     setIsLoading(true);
     try {
-      const data = await subscriptionsApi.listPlans();
-      setPlans(data || []);
+      // Use the correct API endpoint that we set up
+      const response = await fetch('http://localhost:3000/api/plans');
+      if (response.ok) {
+        const data = await response.json();
+        setPlans(data.data.plans || []);
+      } else {
+        throw new Error('Failed to fetch plans');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -79,7 +85,7 @@ export const PlansPage: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900">{plan.name}</h2>
               <div className="mt-4 mb-6">
                 <span className="text-4xl font-bold text-gray-900">
-                  ${plan.price_monthly}
+                  ${plan.priceMonthly}
                 </span>
                 <span className="text-gray-600">/month</span>
               </div>
@@ -90,7 +96,7 @@ export const PlansPage: React.FC = () => {
                 {plan.features?.map((feature) => (
                   <div key={feature} className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-green-600" />
-                    <span className="text-gray-700">{feature}</span>
+                    <span className="text-gray-700">{feature.replace(/_/g, ' ')}</span>
                   </div>
                 ))}
               </div>
