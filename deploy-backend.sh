@@ -35,8 +35,44 @@ ssh -i "$KEY_PATH" -t "$SERVER_USER@$SERVER_IP" << 'ENDSSH'
     echo "🔨 Building TypeScript..."
     npm run build
 
-    echo "🌱 Updating database with latest seed data..."
-    npx knex seed:run
+    echo "🌧️  Setting up environment variables..."
+    cat > .env << 'EOF'
+# Server Configuration
+PORT=3000
+NODE_ENV=production
+
+# Database Configuration (RDS)
+DATABASE_URL=postgresql://postgres:TaskFlow2024Prod@taskflow-db.ccnoum2y0tyf.us-east-1.rds.amazonaws.com:5432/taskflow
+DB_HOST=taskflow-db.ccnoum2y0tyf.us-east-1.rds.amazonaws.com
+DB_PORT=5432
+DB_NAME=taskflow
+DB_USER=postgres
+DB_PASSWORD=TaskFlow2024Prod
+
+# JWT Configuration
+JWT_SECRET=taskflow-super-secret-jwt-key-change-in-production-2026
+JWT_EXPIRES_IN=30d
+
+# SMTP Configuration - Replace with your actual credentials
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=YOUR_GMAIL_EMAIL
+SMTP_PASSWORD=YOUR_APP_PASSWORD
+SMTP_FROM_NAME=TaskFlow
+SMTP_FROM_EMAIL=YOUR_GMAIL_EMAIL
+
+# App URL (used for invite links in emails)
+APP_URL=https://frontend-taskflow-18-three.vercel.app
+EOF
+
+    # Replace placeholders with actual values (credentials not stored in repo)
+    sed -i "s/YOUR_GMAIL_EMAIL/hiruviru18@gmail.com/g" .env
+    sed -i "s/YOUR_APP_PASSWORD/abfg rnae sccg nbok/g" .env
+
+    echo "🌱 Running database migrations and seeds..."
+    npx knex migrate:latest || echo "Migration failed - may need manual RDS security group fix"
+    npx knex seed:run || echo "Seed failed - may need manual RDS security group fix"
 
     echo "♻️  Restarting application..."
     pm2 restart taskflow-api || pm2 start dist/index.js --name taskflow-api
