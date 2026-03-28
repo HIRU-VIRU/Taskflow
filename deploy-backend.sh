@@ -35,6 +35,37 @@ ssh -i "$KEY_PATH" -t "$SERVER_USER@$SERVER_IP" << 'ENDSSH'
     echo "🔨 Building TypeScript..."
     npm run build
 
+    echo "🌧️  Setting up environment variables..."
+    cat > .env << 'EOF'
+# Server Configuration
+PORT=3000
+NODE_ENV=production
+
+# Database Configuration (update these for your AWS RDS instance)
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/taskflow
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=taskflow
+DB_USER=postgres
+DB_PASSWORD=postgres
+
+# JWT Configuration
+JWT_SECRET=taskflow-super-secret-jwt-key-change-in-production-2026
+JWT_EXPIRES_IN=30d
+
+# SMTP Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=hiruviru18@gmail.com
+SMTP_PASSWORD=abfg rnae sccg nbok
+SMTP_FROM_NAME=TaskFlow
+SMTP_FROM_EMAIL=hiruviru18@gmail.com
+
+# App URL (used for invite links in emails)
+APP_URL=https://frontend-taskflow-18-three.vercel.app
+EOF
+
     echo "🌱 Updating database with latest seed data..."
     npx knex seed:run
 
