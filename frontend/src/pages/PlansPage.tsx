@@ -406,7 +406,7 @@ export const PlansPage: React.FC = () => {
       {showPaymentModal && selectedPlan && subscription && (
         <PaymentModal
           plan={selectedPlan}
-          currentPlanPrice={plans.find(p => p.id === subscription.plan_id)?.price_monthly || 0}
+          currentPlanPrice={plans.find(p => p.id === subscription.plan_id)?.priceMonthly || plans.find(p => p.id === subscription.plan_id)?.price_monthly || 0}
           onClose={() => {
             setShowPaymentModal(false);
             setSelectedPlan(null);

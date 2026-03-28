@@ -24,7 +24,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     cvv: '',
   });
 
-  const priceDifference = plan.price_monthly - currentPlanPrice;
+  const priceDifference = ((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0) - currentPlanPrice;
   const isUpgrade = priceDifference > 0;
   const isDowngrade = priceDifference < 0;
 
@@ -77,7 +77,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Amount:</span>
-              <span className="font-semibold text-gray-900">${plan.price_monthly.toFixed(2)}/mo</span>
+              <span className="font-semibold text-gray-900">${((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0).toFixed(2)}/mo</span>
             </div>
 
             {isUpgrade && (
@@ -96,7 +96,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div className="pt-3 border-t border-gray-300">
                 <div className="flex justify-between items-center">
                   <span className="text-blue-600 font-medium">New Cost:</span>
-                  <span className="text-blue-600 font-bold">${plan.price_monthly.toFixed(2)}/mo</span>
+                  <span className="text-blue-600 font-bold">${((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0).toFixed(2)}/mo</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Changes will take effect immediately. Credit will be applied to next billing cycle.
@@ -104,7 +104,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             )}
 
-            {plan.price_monthly === 0 && (
+            {((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0) === 0 && (
               <div className="pt-3 border-t border-gray-300">
                 <div className="bg-blue-100 p-3 rounded-lg">
                   <p className="text-blue-800 text-sm font-medium">
@@ -130,7 +130,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
 
         {/* Payment Form (only for paid plans) */}
-        {plan.price_monthly > 0 && (
+        {((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0) > 0 && (
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -270,7 +270,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     Processing...
                   </span>
                 ) : (
-                  `Confirm Payment - $${plan.price_monthly.toFixed(2)}`
+                  `Confirm Payment - $${((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0).toFixed(2)}`
                 )}
               </button>
             </div>
