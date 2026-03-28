@@ -25,8 +25,23 @@ app.use((req, res, next) => {
 });
 
 // CORS configuration
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  'https://frontend-taskflow-18-three.vercel.app',
+  'https://frontend-taskflow-18.vercel.app',
+];
+
 app.use(cors({
-  origin: env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
