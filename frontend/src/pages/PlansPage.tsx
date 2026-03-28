@@ -315,17 +315,17 @@ export const PlansPage: React.FC = () => {
             <div className="mb-8">
               <div className="flex items-baseline gap-1">
                 <span className="text-5xl font-black text-gray-900 tracking-tight">
-                  ${billingCycle === 'monthly' 
-                    ? ((plan as any).priceMonthly ?? plan.price_monthly)
-                    : ((plan as any).priceAnnual ?? ((plan.price_monthly * 12 * 0.95).toFixed(2)))}
+                  ${billingCycle === 'monthly'
+                    ? ((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0)
+                    : ((plan as any).priceAnnual ?? (((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0) * 12 * 0.95).toFixed(2))}
                 </span>
                 <span className="text-lg font-medium text-gray-400">
                   {billingCycle === 'monthly' ? '/mo' : '/year'}
                 </span>
               </div>
-              {billingCycle === 'annual' && plan.price_monthly > 0 && (
+              {billingCycle === 'annual' && ((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0) > 0 && (
                 <p className="text-xs text-gray-400 mt-1 font-medium italic">
-                  Equivalent to ${(Number((plan as any).priceAnnual ?? (plan.price_monthly * 12 * 0.95)) / 12).toFixed(2)}/mo
+                  Equivalent to ${(Number((plan as any).priceAnnual ?? (((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0) * 12 * 0.95)) / 12).toFixed(2)}/mo
                 </p>
               )}
             </div>
@@ -385,7 +385,7 @@ export const PlansPage: React.FC = () => {
                       mt-8 block w-full py-3 px-6 border border-transparent rounded-lg text-center font-medium transition-colors
                       ${subscription?.plan_id === plan.id
                         ? 'bg-green-50 text-green-700 border-green-200 cursor-default'
-                        : (plan as any).priceMonthly === 0 || plan.price_monthly === 0
+                        : ((plan as any).priceMonthly ?? (plan as any).price_monthly ?? 0) === 0
                         ? 'bg-gray-900 text-white hover:bg-black shadow-lg shadow-gray-200'
                         : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200'
                       }
