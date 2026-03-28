@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+// Load .env from project root (handles both dev and compiled dist/)
+dotenv.config({ path: path.join(__dirname, '../../.env') }); // For compiled dist/config/
+dotenv.config(); // Fallback to default behavior (searches parent directories)
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
