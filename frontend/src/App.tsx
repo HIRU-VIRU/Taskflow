@@ -2,17 +2,23 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { TenantProvider } from './contexts/TenantContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { PlatformAuthProvider, usePlatformAuth } from './contexts/PlatformAuthContext';
 
 // Pages (default exports)
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import AcceptInvitePage from './pages/AcceptInvitePage';
 import DashboardPage from './pages/DashboardPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import TasksPage from './pages/TasksPage';
+import TeamsPage from './pages/TeamsPage';
+import TeamDetailPage from './pages/TeamDetailPage';
 import UsersPage from './pages/UsersPage';
 import SettingsPage from './pages/SettingsPage';
 import PlansPage from './pages/PlansPage';
+import { PlatformLoginPage } from './pages/PlatformLoginPage';
+import { PlatformDashboardPage } from './pages/PlatformDashboardPage';
 
 // Components (default exports)
 import Header from './components/common/Header';
@@ -32,6 +38,21 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+};
+
+// Platform Protected Route Component
+const PlatformProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = usePlatformAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? <>{children}</> : <Navigate to="/platform/login" />;
 };
 
 // Main App Layout for authenticated pages
@@ -56,6 +77,18 @@ const AppRoutes = () => {
       {/* Public routes */}
       <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
+
+      {/* Platform Admin Routes */}
+      <Route path="/platform/login" element={<PlatformLoginPage />} />
+      <Route
+        path="/platform"
+        element={
+          <PlatformProtectedRoute>
+            <PlatformDashboardPage />
+          </PlatformProtectedRoute>
+        }
+      />
 
       {/* Protected routes */}
       <Route
@@ -94,6 +127,26 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <MainLayout>
               <TasksPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teams"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <TeamsPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teams/:teamId"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <TeamDetailPage />
             </MainLayout>
           </ProtectedRoute>
         }
@@ -139,12 +192,14 @@ function App() {
   return (
     <Router>
       <NotificationProvider>
-        <AuthProvider>
-          <TenantProvider>
-            <AppRoutes />
-            <Toast />
-          </TenantProvider>
-        </AuthProvider>
+        <PlatformAuthProvider>
+          <AuthProvider>
+            <TenantProvider>
+              <AppRoutes />
+              <Toast />
+            </TenantProvider>
+          </AuthProvider>
+        </PlatformAuthProvider>
       </NotificationProvider>
     </Router>
   );

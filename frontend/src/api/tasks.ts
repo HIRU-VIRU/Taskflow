@@ -4,8 +4,14 @@ import { Task, CreateTaskRequest, PaginatedResponse } from '../types';
 export const tasksApi = {
   // Get all tasks for a project
   getTasksByProject: async (projectId: string): Promise<Task[]> => {
-    const response = await apiClient.get(`/projects/${projectId}/tasks`);
-    return Array.isArray(response) ? response : response.data || [];
+    const response: any = ((await apiClient.get<any>(`/projects/${projectId}/tasks`)) as any);
+    return Array.isArray(response) ? response : response.tasks || [];
+  },
+
+  // Get all tasks for the current tenant
+  getTenantTasks: async (): Promise<Task[]> => {
+    const response: any = ((await apiClient.get<any>('/tasks')) as any);
+    return Array.isArray(response) ? response : response.tasks || [];
   },
 
   // List tasks for a specific project (paginated)
@@ -15,33 +21,36 @@ export const tasksApi = {
     limit = 20,
     filters?: { status?: string; assignee_id?: string }
   ): Promise<PaginatedResponse<Task>> => {
-    const response = await apiClient.get(`/projects/${projectId}/tasks`, {
+    const response: any = await apiClient.get<any>(`/projects/${projectId}/tasks`, {
       params: { page, limit, ...filters },
     });
-    return response;
+    return {
+      data: response.tasks || [],
+      pagination: response.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 },
+    } as any;
   },
 
   // Get a specific task
   getTask: async (projectId: string, taskId: string): Promise<Task> => {
-    const response = await apiClient.get(`/projects/${projectId}/tasks/${taskId}`);
-    return response;
+    const response: any = ((await apiClient.get<any>(`/projects/${projectId}/tasks/${taskId}`)) as any);
+    return response.task;
   },
 
   // Create a new task
   createTask: async (projectId: string, data: CreateTaskRequest): Promise<Task> => {
-    const response = await apiClient.post(`/projects/${projectId}/tasks`, data);
-    return response;
+    const response: any = ((await apiClient.post<any>(`/projects/${projectId}/tasks`, data)) as any);
+    return response.task;
   },
 
   // Update a task
   updateTask: async (projectId: string, taskId: string, data: Partial<CreateTaskRequest>): Promise<Task> => {
-    const response = await apiClient.put(`/projects/${projectId}/tasks/${taskId}`, data);
-    return response;
+    const response: any = ((await apiClient.put<any>(`/projects/${projectId}/tasks/${taskId}`, data)) as any);
+    return response.task;
   },
 
   // Delete a task
   deleteTask: async (projectId: string, taskId: string): Promise<{ success: boolean }> => {
-    const response = await apiClient.delete(`/projects/${projectId}/tasks/${taskId}`);
+    const response: any = ((await apiClient.delete<any>(`/projects/${projectId}/tasks/${taskId}`)) as any);
     return response;
   },
 };

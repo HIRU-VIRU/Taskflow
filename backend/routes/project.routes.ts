@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { projectController } from '../controllers/ProjectController';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { tenantContextMiddleware } from '../middleware/tenantContextMiddleware';
-import { requireEntitlement } from '../middleware/entitlementMiddleware';
+import { requireEntitlement, adminOnly } from '../middleware/entitlementMiddleware';
 
 const router = Router();
 
@@ -43,5 +43,11 @@ router.put('/:projectId', (req, res) => projectController.update(req, res));
  * Delete project (soft delete - archive)
  */
 router.delete('/:projectId', (req, res) => projectController.delete(req, res));
+
+/**
+ * DELETE /api/projects/:projectId/hard
+ * Permanently delete project (admin only)
+ */
+router.delete('/:projectId/hard', adminOnly, (req, res) => projectController.hardDelete(req, res));
 
 export default router;

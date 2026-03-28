@@ -104,11 +104,44 @@ export interface Project extends BaseEntity {
   description: string | null;
   status: ProjectStatus;
   created_by: string;
+  leader_id?: string | null;
+  team_id?: string | null;
 }
 
 export interface CreateProjectDTO {
   name: string;
   description?: string;
+  leader_id?: string;
+  team_id?: string;
+}
+
+// Team
+export type TeamMemberRole = 'leader' | 'member';
+
+export interface Team extends BaseEntity {
+  tenant_id: string;
+  name: string;
+  description: string | null;
+  leader_id: string | null;
+  created_by: string;
+}
+
+export interface CreateTeamDTO {
+  name: string;
+  description?: string;
+  leader_id?: string;
+}
+
+export interface TeamMember extends BaseEntity {
+  team_id: string;
+  user_id: string;
+  role: TeamMemberRole;
+  joined_at: Date;
+}
+
+export interface AddTeamMemberDTO {
+  user_id: string;
+  role?: TeamMemberRole;
 }
 
 // Task
@@ -123,6 +156,7 @@ export interface Task extends BaseEntity {
   status: TaskStatus;
   priority: TaskPriority;
   assignee_id: string | null;
+  assigned_to_name?: string | null;
   created_by: string;
   due_date: Date | null;
 }
@@ -133,6 +167,7 @@ export interface CreateTaskDTO {
   priority?: TaskPriority;
   assignee_id?: string;
   due_date?: string;
+  status?: TaskStatus;
 }
 
 // UsageTracking
@@ -193,6 +228,98 @@ export interface TenantContext {
 export interface AuthUser {
   id: string;
   email: string;
+  name?: string;
   role: string;
   tenantId: string;
+}
+
+// ─── Platform Admin ──────────────────────────────────────────────────────────
+
+export interface PlatformAdmin {
+  id: string;
+  email: string;
+  password_hash: string;
+  name: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+// ─── Billing & Usage History ─────────────────────────────────────────────────
+
+export type BillingEventType =
+  | 'payment'
+  | 'upgrade'
+  | 'downgrade'
+  | 'cancellation'
+  | 'renewal'
+  | 'refund'
+  | 'trial_start';
+
+export interface BillingEvent {
+  id: string;
+  tenant_id: string;
+  subscription_id: string | null;
+  plan_id: string | null;
+  event_type: BillingEventType;
+  amount: number;
+  description: string | null;
+  period_start: Date | null;
+  period_end: Date | null;
+  created_at: Date;
+  // joined fields
+  plan_name?: string;
+}
+
+export interface UsageSnapshot {
+  id: string;
+  tenant_id: string;
+  usage_key: string;
+  value: number;
+  snapshot_date: string; // ISO date string YYYY-MM-DD
+  created_at: Date;
+}
+
+// ─── Platform Stats ─────────────────────────────────────────────────────────
+
+export interface PlatformStats {
+  totalTenants: number;
+  totalUsers: number;
+  totalProjects: number;
+  totalTasks: number;
+  subscriptionBreakdown: Record<string, number>; // { Free: 3, Pro: 5, Enterprise: 2 }
+  estimatedMRR: number;
+  newTenantsThisMonth: number;
+  revenueSummary: {
+    this_month: number;
+    last_month: number;
+    total_revenue: number;
+  };
+}
+
+export interface TenantSummary {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  planPrice: number;
+  status: string;
+  userCount: number;
+  projectCount: number;
+  createdAt: Date;
+}
+
+export interface RevenueDataPoint {
+  month: string; // YYYY-MM
+  revenue: number;
+  tenantCount: number;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }

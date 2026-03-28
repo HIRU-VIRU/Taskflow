@@ -21,7 +21,7 @@ interface TenantProviderProps {
 }
 
 export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
-  const { user, tenant: authTenant, isAuthenticated } = useAuth();
+  const { tenant: authTenant, isAuthenticated } = useAuth();
   const [tenant, setTenant] = useState<Tenant | null>(authTenant || null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,24 +29,32 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
 
   // Fetch tenant subscription info
   const fetchTenantInfo = useCallback(async () => {
-    if (!isAuthenticated) return;
+    console.log('🔄 TenantContext: fetchTenantInfo called, isAuthenticated:', isAuthenticated);
+    if (!isAuthenticated) {
+      console.log('❌ TenantContext: Not authenticated, skipping fetch');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
     try {
+      console.log('📡 TenantContext: Calling subscriptionsApi.getCurrentSubscription()...');
       const sub = await subscriptionsApi.getCurrentSubscription();
+      console.log('✅ TenantContext: Subscription fetched successfully:', sub);
       setSubscription(sub);
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to fetch subscription';
+      console.error('❌ TenantContext: Error fetching subscription:', err);
       setError(errorMessage);
-      console.error('Failed to fetch tenant info:', err);
     } finally {
       setIsLoading(false);
+      console.log('🏁 TenantContext: fetchTenantInfo completed');
     }
   }, [isAuthenticated]);
 
   // Refresh subscription (call to update after plan change)
   const refreshSubscription = useCallback(async () => {
+    console.log('🔄 TenantContext: refreshSubscription called');
     await fetchTenantInfo();
   }, [fetchTenantInfo]);
 

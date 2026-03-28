@@ -56,14 +56,16 @@ export class ProjectController {
   /**
    * GET /api/projects
    * List all projects for tenant
+   * Query params: page, limit, includeArchived
    */
   async list(req: Request, res: Response): Promise<void> {
     try {
       const tenantId = (req as any).user!.tenantId;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
+      const includeArchived = req.query.includeArchived === 'true';
 
-      const result = await projectService.list(tenantId, page, limit);
+      const result = await projectService.list(tenantId, page, limit, includeArchived);
 
       res.status(200).json({
         success: true,
@@ -187,6 +189,43 @@ export class ProjectController {
         error: {
           code: 'INTERNAL_ERROR',
           message: 'An error occurred while deleting the project',
+        },
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/projects/:projectId/hard
+   * Permanently delete project (admin only)
+   */
+  async hardDelete(req: Request, res: Response): Promise<void> {
+    try {
+      const tenantId = (req as any).user!.tenantId;
+      const projectId = req.params.projectId;
+
+      const success = await projectService.hardDelete(tenantId, projectId);
+
+      if (!success) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Project not found',
+          },
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: { message: 'Project permanently deleted' },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while permanently deleting the project',
         },
       });
     }

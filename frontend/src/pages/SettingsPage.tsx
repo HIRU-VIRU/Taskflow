@@ -3,7 +3,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTenant } from '../contexts/TenantContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
-import { SuccessMessage } from '../components/common/StatusMessages';
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,11 +14,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleUpdateTenantName = (e: React.FormEvent) => {
     e.preventDefault();
-    addNotification({
-      type: 'success',
-      message: 'Tenant name update functionality would go here',
-      duration: 3000,
-    });
+    addNotification('Tenant name update functionality would go here', 'success');
   };
 
   const handleLogout = () => {
@@ -118,7 +113,7 @@ export const SettingsPage: React.FC = () => {
             <button
               onClick={() => {
                 if (confirm('Are you absolutely sure? This cannot be undone.')) {
-                  addNotification({ type: 'error', message: 'Delete tenant functionality not yet implemented' });
+                  addNotification('Delete tenant functionality not yet implemented', 'error');
                 }
               }}
               className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"

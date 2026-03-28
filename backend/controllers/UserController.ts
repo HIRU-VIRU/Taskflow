@@ -24,7 +24,7 @@ export class UserController {
         return;
       }
 
-      const newUser = await userService.invite(tenantId, { email, name, role });
+      const newUser = await userService.invite(tenantId, user.id, { email, name, role });
 
       res.status(201).json({
         success: true,

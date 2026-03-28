@@ -19,6 +19,8 @@ export class ProjectRepository {
         description: data.description || null,
         status: 'active',
         created_by: userId,
+        leader_id: data.leader_id || null,
+        team_id: data.team_id || null,
       })
       .returning('*');
     return project;
@@ -79,13 +81,21 @@ export class ProjectRepository {
     return this.update(id, tenantId, { status: 'archived' });
   }
 
-  async getProjectsWithTaskCount(tenantId: string): Promise<
-    Array<Project & { task_count: number }>
-  > {
+  async getProjectsWithTaskCount(
+    tenantId: string,
+    status?: ProjectStatus
+  ): Promise<Array<Project & { task_count: number }>> {
     // All queries MUST include tenant_id filter for tenant isolation
-    const projects = await db(this.tableName)
+    let query = db(this.tableName)
       .leftJoin('tasks', 'projects.id', 'tasks.project_id')
-      .where('projects.tenant_id', tenantId)
+      .where('projects.tenant_id', tenantId);
+
+    // Filter by status if specified
+    if (status) {
+      query = query.andWhere('projects.status', status);
+    }
+
+    const projects = await query
       .groupBy('projects.id')
       .select('projects.*')
       .count('tasks.id as task_count');
@@ -97,6 +107,8 @@ export class ProjectRepository {
       description: p.description as string | null,
       status: p.status as ProjectStatus,
       created_by: p.created_by as string,
+      leader_id: p.leader_id as string | null,
+      team_id: p.team_id as string | null,
       created_at: p.created_at as Date,
       updated_at: p.updated_at as Date,
       task_count: parseInt(p.task_count as string) || 0,

@@ -22,4 +22,16 @@ router.post('/assign', adminOnly, (req, res) => subscriptionController.assign(re
  */
 router.get('/current', (req, res) => subscriptionController.getCurrent(req, res));
 
+/**
+ * GET /api/subscriptions/billing-history
+ * Billing events for the tenant (payments, upgrades, etc.)
+ */
+router.get('/billing-history', (req, res) => subscriptionController.getBillingHistory(req, res));
+
+/**
+ * GET /api/subscriptions/usage-history?key=project_count&days=30
+ * Historical usage snapshots for charts
+ */
+router.get('/usage-history', (req, res) => subscriptionController.getUsageHistory(req, res));
+
 export default router;

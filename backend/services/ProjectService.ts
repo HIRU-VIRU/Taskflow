@@ -51,17 +51,19 @@ export class ProjectService {
   }
 
   /**
-   * List projects with pagination
+   * List projects with pagination (only active by default)
    */
   async list(
     tenantId: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    includeArchived: boolean = false
   ): Promise<{
     projects: Array<Project & { taskCount: number }>;
     pagination: { page: number; limit: number; total: number };
   }> {
-    const projects = await projectRepository.getProjectsWithTaskCount(tenantId);
+    const status = includeArchived ? undefined : 'active';
+    const projects = await projectRepository.getProjectsWithTaskCount(tenantId, status);
     const total = projects.length;
     const start = (page - 1) * limit;
     const paginatedProjects = projects.slice(start, start + limit).map(p => ({
@@ -76,12 +78,14 @@ export class ProjectService {
   }
 
   /**
-   * Get all projects with task count
+   * Get all projects with task count (only active by default)
    */
   async getAllWithTaskCount(
-    tenantId: string
+    tenantId: string,
+    includeArchived: boolean = false
   ): Promise<Array<Project & { task_count: number }>> {
-    return projectRepository.getProjectsWithTaskCount(tenantId);
+    const status = includeArchived ? undefined : 'active';
+    return projectRepository.getProjectsWithTaskCount(tenantId, status);
   }
 
   /**
@@ -103,9 +107,24 @@ export class ProjectService {
   }
 
   /**
-   * Delete project and decrement usage
+   * Delete project (soft delete - archive)
    */
   async delete(tenantId: string, projectId: string): Promise<boolean> {
+    // Verify project exists and is not already archived
+    const project = await projectRepository.findById(projectId, tenantId);
+    if (!project || project.status === 'archived') {
+      return false;
+    }
+
+    // Archive the project (soft delete)
+    const archivedProject = await projectRepository.archive(projectId, tenantId);
+    return !!archivedProject;
+  }
+
+  /**
+   * Delete project permanently and decrement usage (admin only)
+   */
+  async hardDelete(tenantId: string, projectId: string): Promise<boolean> {
     return db.transaction(async (trx) => {
       // Verify project exists
       const project = await projectRepository.findById(projectId, tenantId);
@@ -113,14 +132,16 @@ export class ProjectService {
         return false;
       }
 
-      // Delete project
+      // Hard delete project
       const deleted = await trx('projects')
         .where({ id: projectId, tenant_id: tenantId })
         .del();
 
       if (deleted > 0) {
-        // Decrement usage
-        await usageTrackingRepository.decrement(tenantId, 'project_count', trx);
+        // Only decrement usage if project was active (not archived)
+        if (project.status === 'active') {
+          await usageTrackingRepository.decrement(tenantId, 'project_count', trx);
+        }
       }
 
       return deleted > 0;

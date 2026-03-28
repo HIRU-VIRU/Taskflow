@@ -32,6 +32,8 @@ export interface Project {
   description: string | null;
   status: 'active' | 'archived';
   created_by: string;
+  leader_id?: string | null;
+  team_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +41,42 @@ export interface Project {
 export interface CreateProjectRequest {
   name: string;
   description?: string;
+  leader_id?: string;
+  team_id?: string;
+}
+
+// Team Types
+export interface Team {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description: string | null;
+  leader_id: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  project_count?: number; // Included in list views
+}
+
+export interface CreateTeamRequest {
+  name: string;
+  description?: string;
+  leader_id?: string;
+}
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  user_id: string;
+  role: 'leader' | 'member';
+  joined_at: string;
+  user_name?: string;
+  user_email?: string;
+}
+
+export interface AddTeamMemberRequest {
+  user_id: string;
+  role?: 'leader' | 'member';
 }
 
 // Task Types
@@ -51,6 +89,7 @@ export interface Task {
   status: 'todo' | 'in_progress' | 'done';
   priority: 'low' | 'medium' | 'high';
   assignee_id: string | null;
+  assigned_to_name?: string | null;
   created_by: string;
   due_date: string | null;
   created_at: string;
@@ -61,8 +100,9 @@ export interface CreateTaskRequest {
   title: string;
   description?: string;
   priority?: 'low' | 'medium' | 'high';
-  assignee_id?: string;
+  assignee_id?: string | null;
   due_date?: string;
+  status?: 'todo' | 'in_progress' | 'done';
 }
 
 // Plan & Subscription Types
@@ -71,6 +111,8 @@ export interface Plan {
   name: string;
   description: string | null;
   price_monthly: number;
+  priceMonthly?: number; // legacy alias for price_monthly
+  priceAnnual?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -93,7 +135,7 @@ export interface Subscription {
 }
 
 // Feature & Entitlement Types
-export type FeatureCode = 'CREATE_PROJECT' | 'INVITE_USER' | 'CREATE_TASK' | 'VIEW_ANALYTICS';
+export type FeatureCode = 'CREATE_PROJECT' | 'INVITE_USER' | 'CREATE_TASK' | 'VIEW_ANALYTICS' | 'AI_SUMMARIZER';
 
 export interface EntitlementCheckResult {
   allowed: boolean;
@@ -170,3 +212,70 @@ export interface Notification {
   message: string;
   duration?: number;
 }
+
+// ─── Platform Admin ──────────────────────────────────────────────────────────
+
+export interface PlatformAdmin {
+  id: string;
+  email: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlatformStats {
+  totalTenants: number;
+  totalUsers: number;
+  totalProjects: number;
+  totalTasks: number;
+  subscriptionBreakdown: Record<string, number>;
+  estimatedMRR: number;
+  newTenantsThisMonth: number;
+  revenueSummary: {
+    this_month: number;
+    last_month: number;
+    total_revenue: number;
+  };
+}
+
+export interface TenantSummary {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  planPrice: number;
+  status: string;
+  userCount: number;
+  projectCount: number;
+  createdAt: string; // ISO Date String
+}
+
+export interface RevenueDataPoint {
+  month: string; // YYYY-MM
+  revenue: number;
+  tenantCount: number;
+}
+
+export interface BillingEvent {
+  id: string;
+  tenant_id: string;
+  subscription_id: string | null;
+  plan_id: string | null;
+  event_type: string;
+  amount: number;
+  description: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  created_at: string;
+  plan_name?: string;
+}
+
+export interface UsageSnapshot {
+  id: string;
+  tenant_id: string;
+  usage_key: string;
+  value: number;
+  snapshot_date: string; // YYYY-MM-DD
+  created_at: string;
+}
+

@@ -14,11 +14,10 @@ export class AdminController {
       const user = req.user!;
       const tenantId = user.tenantId;
 
-      const [userCount, projects, subscription, analytics] = await Promise.all([
+      const [userCount, subscriptionData, analytics] = await Promise.all([
         userService.getCount(tenantId),
-        analyticsService.getProjectStats(tenantId),
         subscriptionService.getCurrentSubscription(tenantId),
-        analyticsService.getDashboardStats(tenantId),
+        analyticsService.getDashboard(tenantId),
       ]);
 
       res.status(200).json({
@@ -28,17 +27,18 @@ export class AdminController {
             id: tenantId,
             userCount,
           },
-          subscription: {
-            plan: subscription.plan_name,
-            status: subscription.status,
-            expires_at: subscription.expires_at,
-          },
+          subscription: subscriptionData ? {
+            plan: subscriptionData.planName,
+            status: subscriptionData.subscription.status,
+            expires_at: subscriptionData.subscription.expires_at,
+            limits: subscriptionData.limits,
+          } : null,
           projects: {
-            total: projects.total,
-            active: projects.active,
-            archived: projects.archived,
+            total: analytics.projectCount,
           },
-          analytics,
+          analytics: {
+            tasksByStatus: analytics.tasksByStatus,
+          },
         },
       });
     } catch (error) {

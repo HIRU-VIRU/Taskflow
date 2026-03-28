@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (data: LoginRequest) => Promise<void>;
   logout: () => void;
   register: (data: RegisterRequest) => Promise<void>;
+  setAuthState: (user: User, tenant: Tenant, token: string) => void;
   isAdmin: () => boolean;
 }
 
@@ -88,24 +89,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return user?.role === 'admin';
   }, [user]);
 
+  const setAuthState = useCallback((user: User, tenant: Tenant, token: string) => {
+    setUser(user);
+    setTenant(tenant);
+    setToken(token);
+
+    // Persist to localStorage
+    tokenUtils.setToken(token);
+    tokenUtils.setTenantId(tenant.id);
+    tokenUtils.setUserId(user.id);
+  }, []);
+
   // Initialize auth state from localStorage on mount
   useEffect(() => {
     const initAuth = async () => {
+      console.log('🔐 AuthContext: Initializing auth...');
       try {
         const storedToken = tokenUtils.getToken();
         const storedTenantId = tokenUtils.getTenantId();
         const storedUserId = tokenUtils.getUserId();
 
+        console.log('🔐 AuthContext: Stored token exists:', !!storedToken);
+        console.log('🔐 AuthContext: Stored tenantId:', storedTenantId);
+        console.log('🔐 AuthContext: Stored userId:', storedUserId);
+
         if (storedToken && storedTenantId && storedUserId) {
           // Check if token is expired
           if (tokenUtils.isTokenExpired(storedToken)) {
+            console.log('⚠️ AuthContext: Token is expired, clearing storage');
             tokenUtils.clearAll();
           } else {
+            console.log('✅ AuthContext: Token is valid, restoring session...');
             setToken(storedToken);
 
             // Try to get user info from API to ensure token is still valid
             try {
-              const response = await fetch('/api/auth/me', {
+              const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+              const response = await fetch(`${apiBaseUrl}/auth/me`, {
                 headers: {
                   'Authorization': `Bearer ${storedToken}`,
                   'Content-Type': 'application/json',
@@ -113,24 +133,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               });
 
               if (response.ok) {
-                const data = await response.json();
-                setUser(data.user);
-                setTenant(data.tenant);
+                const responseData = await response.json();
+                console.log('🔍 AuthContext: Raw API response:', responseData);
+                // Backend returns { success: true, data: { user, tenant } }
+                const data = responseData.data || responseData;
+                console.log('🔍 AuthContext: Extracted data:', data);
+                console.log('🔍 AuthContext: User object:', data.user);
+                console.log('🔍 AuthContext: Tenant object:', data.tenant);
+
+                if (data.user) {
+                  console.log('✅ AuthContext: Session restored, user:', data.user.email);
+                  setUser(data.user);
+                  setTenant(data.tenant);
+                } else {
+                  console.log('⚠️ AuthContext: No user in response, clearing auth');
+                  tokenUtils.clearAll();
+                  setToken(null);
+                }
               } else {
                 // Token invalid, clear storage
+                console.log('⚠️ AuthContext: Token invalid (response not ok), clearing storage');
                 tokenUtils.clearAll();
                 setToken(null);
               }
             } catch (err) {
-              console.error('Failed to validate token:', err);
+              console.error('❌ AuthContext: Failed to validate token:', err);
               // Keep token but don't fail initialization
             }
           }
         }
       } catch (err) {
-        console.error('Failed to initialize auth:', err);
+        console.error('❌ AuthContext: Failed to initialize auth:', err);
         tokenUtils.clearAll();
       } finally {
+        console.log('🏁 AuthContext: Initialization complete');
         setIsInitialized(true);
       }
     };
@@ -162,6 +198,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     register,
+    setAuthState,
     isAdmin,
   };
 

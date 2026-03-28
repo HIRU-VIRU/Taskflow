@@ -1,8 +1,9 @@
 import { subscriptionRepository } from '../repositories/SubscriptionRepository';
 import { planRepository } from '../repositories/PlanRepository';
 import { usageTrackingRepository } from '../repositories/UsageTrackingRepository';
+import { billingRepository } from '../repositories/BillingRepository';
 import { entitlementService } from './EntitlementService';
-import { Plan, Subscription } from '../types';
+import { Plan, Subscription, BillingEvent, UsageSnapshot } from '../types';
 
 export class SubscriptionService {
   /**
@@ -43,8 +44,19 @@ export class SubscriptionService {
   async assignPlan(
     tenantId: string,
     planId: string,
-    expiresAt?: Date
+    expiresAt?: Date,
+    billingCycle: 'monthly' | 'annual' = 'monthly'
   ): Promise<Subscription> {
+    // If expiresAt is not provided, calculate it based on billing cycle
+    if (!expiresAt) {
+      const currentDate = new Date();
+      if (billingCycle === 'annual') {
+        currentDate.setFullYear(currentDate.getFullYear() + 1);
+      } else {
+        currentDate.setDate(currentDate.getDate() + 30);
+      }
+      expiresAt = currentDate;
+    }
     // Verify plan exists
     const plan = await planRepository.findById(planId);
     if (!plan) {
@@ -128,6 +140,25 @@ export class SubscriptionService {
       max_users: 'user_count',
     };
     return mapping[limitKey] || limitKey;
+  }
+
+  /**
+   * Get billing history for the tenant (events ledger)
+   */
+  async getBillingHistory(tenantId: string): Promise<BillingEvent[]> {
+    return billingRepository.getBillingHistory(tenantId, 50);
+  }
+
+  /**
+   * Get usage history for a specific key over N days
+   * usageKey: 'project_count' | 'user_count'
+   */
+  async getUsageHistory(
+    tenantId: string,
+    usageKey: string,
+    days = 30
+  ): Promise<UsageSnapshot[]> {
+    return billingRepository.getUsageHistory(tenantId, usageKey, days);
   }
 }
 

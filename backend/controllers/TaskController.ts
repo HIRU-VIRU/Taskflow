@@ -193,6 +193,41 @@ export class TaskController {
       });
     }
   }
+
+  /**
+   * GET /api/tasks
+   * List all tasks for the current tenant
+   */
+  async listByTenant(req: Request, res: Response): Promise<void> {
+    try {
+      const tenantId = req.user!.tenantId;
+      const status = req.query.status as string;
+      const assigneeId = req.query.assignee_id as string;
+
+      const tasks = await taskService.getByTenant(tenantId);
+      
+      let filteredTasks = tasks;
+      if (status) {
+        filteredTasks = filteredTasks.filter(t => t.status === status);
+      }
+      if (assigneeId) {
+        filteredTasks = filteredTasks.filter(t => t.assignee_id === assigneeId);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: { tasks: filteredTasks },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while fetching tasks for the tenant',
+        },
+      });
+    }
+  }
 }
 
 export const taskController = new TaskController();

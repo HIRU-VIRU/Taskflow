@@ -9,7 +9,7 @@ console.log('📍 Node environment:', process.env.NODE_ENV || 'development');
 console.log('📍 Port:', process.env.PORT || 3000);
 
 const app: Express = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 console.log('✅ Express app created');
 
@@ -37,16 +37,16 @@ console.log('✅ Basic health check route added');
 async function testDatabaseAndStartServer() {
   try {
     console.log('🔍 Testing database connection...');
-    const { db } = await import('./config/database');
+    const { db } = await import('../config/database');
 
     const result = await db.raw('SELECT NOW() as time');
     console.log('✅ Database connected successfully at:', result.rows[0].time);
 
     // Now load the full application routes
     console.log('📚 Loading application routes...');
-    const routes = await import('./routes');
-    const { errorHandler } = await import('./middleware/errorHandler');
-    const { rateLimiter } = await import('./middleware/rateLimiter');
+    const routes = await import('../routes');
+    const { errorHandler } = await import('../middleware/errorHandler');
+    const { rateLimiter } = await import('../middleware/rateLimiter');
 
     console.log('✅ Routes and middleware loaded');
 
@@ -72,8 +72,8 @@ async function testDatabaseAndStartServer() {
 
     console.log('✅ All middleware and routes configured');
 
-  } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
+  } catch (error: any) {
+    console.error('❌ Database connection failed:', error?.message || error);
     console.error('📋 Server will start without database features');
   }
 

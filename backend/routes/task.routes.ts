@@ -3,6 +3,7 @@ import { taskController } from '../controllers/TaskController';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { tenantContextMiddleware } from '../middleware/tenantContextMiddleware';
 import { requireEntitlement } from '../middleware/entitlementMiddleware';
+import { requireProjectLeaderOrAdmin } from '../middleware/projectLeaderMiddleware';
 
 const router = Router({ mergeParams: true }); // mergeParams to access :projectId from parent
 
@@ -12,11 +13,12 @@ router.use(tenantContextMiddleware);
 
 /**
  * POST /api/projects/:projectId/tasks
- * Create a task in a project (requires CREATE_TASK feature)
+ * Create a task in a project (requires CREATE_TASK feature and project leader permissions)
  */
 router.post(
   '/',
   requireEntitlement('CREATE_TASK'),
+  requireProjectLeaderOrAdmin,
   (req, res) => taskController.create(req, res)
 );
 

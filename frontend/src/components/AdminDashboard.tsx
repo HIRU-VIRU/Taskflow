@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AdminOnly, RoleBadge, usePermissions } from './RoleBasedAccess';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
+import { tokenUtils } from '../utils/token';
 
 interface User {
   id: string;
@@ -51,7 +52,7 @@ export const AdminDashboard: React.FC = () => {
       if (isAdmin()) {
         const usersResponse = await fetch('/api/users', {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${tokenUtils.getToken()}`,
           },
         });
         if (usersResponse.ok) {
@@ -76,7 +77,7 @@ export const AdminDashboard: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${tokenUtils.getToken()}`,
         },
         body: JSON.stringify({
           email: newUserEmail,
@@ -90,7 +91,7 @@ export const AdminDashboard: React.FC = () => {
         setNewUserName('');
         setNewUserRole('member');
         loadData(); // Reload users list
-        alert('User invited successfully!');
+        alert('Invitation sent successfully! The user will appear once they accept the invitation.');
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error.message}`);

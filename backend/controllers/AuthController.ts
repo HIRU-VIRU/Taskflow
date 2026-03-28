@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { authService } from '../services/AuthService';
+import { tenantRepository } from '../repositories/TenantRepository';
 import { RegisterDTO, LoginDTO } from '../types';
 
 export class AuthController {
@@ -99,18 +100,28 @@ export class AuthController {
     try {
       const user = req.user!; // Now properly typed thanks to express type extensions
 
+      // Fetch tenant info
+      const tenant = await tenantRepository.findById(user.tenantId);
+
       res.status(200).json({
         success: true,
         data: {
           user: {
             id: user.id,
             email: user.email,
+            name: user.name,
             role: user.role,
             tenantId: user.tenantId,
           },
+          tenant: tenant ? {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+          } : null,
         },
       });
     } catch (error) {
+      console.error('Error in auth/me:', error);
       res.status(500).json({
         success: false,
         error: {

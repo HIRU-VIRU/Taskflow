@@ -1,12 +1,10 @@
 import express, { Express } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import morgan from 'morgan';
+import { env } from './config/env';
 import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
-
-// Load environment variables
-dotenv.config();
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -15,9 +13,20 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Request logging
+app.use(morgan('dev')); // Colorful dev format
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+  });
+  next();
+});
+
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Default Vite dev server port
+  origin: env.FRONTEND_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

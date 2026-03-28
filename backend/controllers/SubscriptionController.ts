@@ -10,7 +10,7 @@ export class SubscriptionController {
   async assign(req: Request, res: Response): Promise<void> {
     try {
       const tenantId = req.user!.tenantId;
-      const { planId } = req.body;
+      const { planId, billingCycle = 'monthly' } = req.body;
 
       if (!planId) {
         res.status(400).json({
@@ -23,11 +23,28 @@ export class SubscriptionController {
         return;
       }
 
-      const subscription = await subscriptionService.assignPlan(tenantId, planId);
+      const subscription = await subscriptionService.assignPlan(tenantId, planId, undefined, billingCycle);
 
+      // Fetch plan details to return complete subscription info
+      const plan = await planRepository.findById(planId);
+      const features = await planRepository.getFeatures(planId);
+      const limits = await planRepository.getLimits(planId);
+
+      // Return flat structure consistent with getCurrent
       res.status(200).json({
         success: true,
-        data: { subscription },
+        data: {
+          id: subscription.id,
+          tenant_id: subscription.tenant_id,
+          plan_id: subscription.plan_id,
+          plan_name: plan?.name || '',
+          status: subscription.status,
+          expires_at: subscription.expires_at,
+          created_at: subscription.created_at,
+          updated_at: subscription.updated_at,
+          features,
+          limits,
+        },
       });
     } catch (error) {
       const err = error as Error;
@@ -71,9 +88,9 @@ export class SubscriptionController {
     try {
       const tenantId = req.user!.tenantId;
 
-      const subscription = await subscriptionService.getCurrentSubscription(tenantId);
+      const subscriptionData = await subscriptionService.getCurrentSubscription(tenantId);
 
-      if (!subscription) {
+      if (!subscriptionData) {
         res.status(404).json({
           success: false,
           error: {
@@ -84,9 +101,21 @@ export class SubscriptionController {
         return;
       }
 
+      // Return flat structure with subscription fields at top level
       res.status(200).json({
         success: true,
-        data: { subscription },
+        data: {
+          id: subscriptionData.subscription.id,
+          tenant_id: subscriptionData.subscription.tenant_id,
+          plan_id: subscriptionData.subscription.plan_id,
+          plan_name: subscriptionData.planName,
+          status: subscriptionData.subscription.status,
+          expires_at: subscriptionData.subscription.expires_at,
+          created_at: subscriptionData.subscription.created_at,
+          updated_at: subscriptionData.subscription.updated_at,
+          features: subscriptionData.features,
+          limits: subscriptionData.limits,
+        },
       });
     } catch (error) {
       res.status(500).json({
@@ -116,7 +145,8 @@ export class SubscriptionController {
             id: plan.id,
             name: plan.name,
             description: plan.description,
-            priceMonthly: plan.price_monthly,
+            priceMonthly: parseFloat(plan.price_monthly.toString()),
+            priceAnnual: parseFloat((plan.price_monthly * 12 * 0.95).toFixed(2)),
             features,
             limits,
           };
@@ -134,6 +164,42 @@ export class SubscriptionController {
           code: 'INTERNAL_ERROR',
           message: 'An error occurred while fetching plans',
         },
+      });
+    }
+  }
+  /**
+   * GET /api/subscriptions/billing-history
+   * Get this tenant's billing events (payments, upgrades, etc.)
+   */
+  async getBillingHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const tenantId = req.user!.tenantId;
+      const events = await subscriptionService.getBillingHistory(tenantId);
+      res.status(200).json({ success: true, data: { events } });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch billing history' },
+      });
+    }
+  }
+
+  /**
+   * GET /api/subscriptions/usage-history?key=project_count&days=30
+   * Get historical usage snapshots for graphing
+   */
+  async getUsageHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const tenantId = req.user!.tenantId;
+      const usageKey = (req.query.key as string) || 'project_count';
+      const days = Math.min(365, Math.max(7, parseInt(req.query.days as string) || 30));
+
+      const snapshots = await subscriptionService.getUsageHistory(tenantId, usageKey, days);
+      res.status(200).json({ success: true, data: { snapshots, usageKey, days } });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch usage history' },
       });
     }
   }

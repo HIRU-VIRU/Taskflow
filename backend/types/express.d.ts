@@ -6,6 +6,7 @@ declare global {
     interface Request {
       user?: AuthUser;
       tenantContext?: TenantContext;
+      platformAdmin?: { id: string; email: string; name?: string };
     }
   }
 }

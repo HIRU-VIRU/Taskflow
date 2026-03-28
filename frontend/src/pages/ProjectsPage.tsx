@@ -1,23 +1,38 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectsApi } from '../api/projects';
+import { teamsApi } from '../api/teams';
 import { useTenant } from '../contexts/TenantContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../hooks/useNotification';
-import { Project } from '../types';
-import { FolderPlus, Trash2, Archive } from 'lucide-react';
+import { Project, Team } from '../types';
+import { FolderPlus, Archive, Users } from 'lucide-react';
 
 const ProjectsPage = () => {
   const navigate = useNavigate();
   const { hasFeature } = useTenant();
+  const { user } = useAuth();
   const { showError, showSuccess } = useNotification();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [formData, setFormData] = useState({ name: '', description: '', team_id: '' });
 
   useEffect(() => {
     fetchProjects();
+    fetchTeams();
   }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const teamsData = await teamsApi.getTeams();
+      setTeams(teamsData);
+    } catch (error: any) {
+      console.error('Failed to fetch teams:', error);
+      // Don't show error for teams fetch as it's optional
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -41,7 +56,7 @@ const ProjectsPage = () => {
     try {
       const newProject = await projectsApi.createProject(formData);
       setProjects((prev) => [newProject, ...prev]);
-      setFormData({ name: '', description: '' });
+      setFormData({ name: '', description: '', team_id: '' });
       setShowForm(false);
       showSuccess('Project created successfully!');
     } catch (error: any) {
@@ -97,6 +112,26 @@ const ProjectsPage = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            {user?.role === 'admin' && teams.length > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Assign Team</label>
+                <select
+                  value={formData.team_id}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, team_id: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">No team assigned</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name} {team.description && `(${team.description})`}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-sm text-gray-500 mt-1">
+                  Assign this project to a team. Team leaders will be able to manage tasks.
+                </p>
+              </div>
+            )}
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -125,30 +160,48 @@ const ProjectsPage = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
-              onClick={() => navigate(`/projects/${project.id}`)}
-            >
-              <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
-              <p className="text-gray-600 text-sm mt-2">{project.description}</p>
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                  {project.status}
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleArchive(project.id);
-                  }}
-                  className="p-1 text-gray-600 hover:text-red-600"
-                >
-                  <Archive className="w-4 h-4" />
-                </button>
+          {projects.map((project) => {
+            const assignedTeam = teams.find(team => team.id === project.team_id);
+            return (
+              <div
+                key={project.id}
+                className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
+                onClick={() => navigate(`/projects/${project.id}`)}
+              >
+                <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+                <p className="text-gray-600 text-sm mt-2">{project.description}</p>
+
+                {assignedTeam && (
+                  <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
+                    <Users className="w-4 h-4" />
+                    <span>Team: {assignedTeam.name}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                      {project.status}
+                    </span>
+                    {!assignedTeam && (
+                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                        No team
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleArchive(project.id);
+                    }}
+                    className="p-1 text-gray-600 hover:text-red-600"
+                  >
+                    <Archive className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

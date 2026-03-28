@@ -6,6 +6,7 @@ import {
   FolderOpen,
   CheckSquare,
   Users,
+  UserCog,
   Settings,
   CreditCard,
 } from 'lucide-react';
@@ -21,7 +22,8 @@ const Sidebar = () => {
     { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { label: 'Projects', icon: FolderOpen, path: '/projects' },
     { label: 'Tasks', icon: CheckSquare, path: '/tasks' },
-    { label: 'Team', icon: Users, path: '/users', adminOnly: false },
+    { label: 'Teams', icon: Users, path: '/teams', adminOnly: true },
+    { label: 'Members', icon: UserCog, path: '/users', adminOnly: false },
     { label: 'Plans', icon: CreditCard, path: '/plans' },
     { label: 'Settings', icon: Settings, path: '/settings' },
   ];
@@ -35,22 +37,35 @@ const Sidebar = () => {
         <p className="text-xs text-gray-400 mt-1">{subscription?.plan_name || 'Free'} Plan</p>
       </div>
 
-      <nav className="space-y-2 flex-1">
+      <nav className="space-y-1.5 flex-1">
         {menuItems.map((item) => {
+          // Hide admin-only items for non-admin users
+          if (item.adminOnly && !isAdmin()) {
+            return null;
+          }
+
           const Icon = item.icon;
+          const active = isActive(item.path);
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
               className={clsx(
-                'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition',
-                isActive(item.path)
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800'
+                'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative',
+                active
+                  ? 'bg-blue-600/10 text-blue-500 font-bold'
+                  : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200 font-medium'
               )}
             >
-              <Icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
+              <div className={clsx(
+                "absolute left-0 w-1 h-8 rounded-r-full transition-all duration-200",
+                active ? "bg-blue-500 opacity-100" : "bg-transparent opacity-0"
+              )} />
+              <Icon className={clsx(
+                "w-5 h-5 transition-transform duration-200",
+                active ? "scale-110" : "group-hover:scale-110"
+              )} />
+              <span>{item.label}</span>
             </button>
           );
         })}

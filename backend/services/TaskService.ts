@@ -95,6 +95,7 @@ export class TaskService {
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.priority !== undefined) updateData.priority = data.priority;
+    if (data.status !== undefined) updateData.status = data.status as TaskStatus;
     if (data.assignee_id !== undefined) updateData.assignee_id = data.assignee_id;
     if (data.due_date !== undefined) {
       updateData.due_date = data.due_date ? new Date(data.due_date) : null;
