@@ -79,9 +79,10 @@ export async function seed(knex: Knex): Promise<void> {
 
   // Insert Plan Feature Mappings
   await knex('plan_feature_mappings').insert([
-    // Free Plan: CREATE_PROJECT, CREATE_TASK
+    // Free Plan: CREATE_PROJECT, CREATE_TASK, INVITE_USER (up to 5 users)
     { plan_id: planMap['Free'], feature_id: featureMap['CREATE_PROJECT'] },
     { plan_id: planMap['Free'], feature_id: featureMap['CREATE_TASK'] },
+    { plan_id: planMap['Free'], feature_id: featureMap['INVITE_USER'] },
 
     // Pro Plan: All features including AI_SUMMARIZER and CREATE_TEAM
     { plan_id: planMap['Pro'], feature_id: featureMap['CREATE_PROJECT'] },
