@@ -235,31 +235,31 @@ npm run dev
 
 | Component | Platform | URL | Configuration |
 |-----------|----------|-----|---------------|
-| **Frontend** | Vercel | https://frontend-taskflow-18-three.vercel.app | Auto-deploy from main branch |
-| **Backend API** | AWS EC2 | https://52-2-121-88.nip.io/api | nginx + Node.js + PM2 |
+| **Frontend** | Vercel | https://your-frontend.vercel.app | Auto-deploy from main branch |
+| **Backend API** | AWS EC2 | https://your-api-domain.com/api | nginx + Node.js + PM2 |
 | **Database** | AWS RDS | PostgreSQL with SSL | Multi-AZ, encrypted |
 
 ### SSL Configuration
 
 - **Frontend**: Automatic HTTPS via Vercel
 - **Backend**: Let's Encrypt certificate via nip.io domain
-- **API Domain**: `52-2-121-88.nip.io` (resolves to 52.2.121.88)
+- **API Domain**: `your-ip.nip.io` (resolves to your server IP)
 - **Certificate**: Auto-renewal enabled via certbot
 
 ### Environment Variables
 
 **Frontend (.env.production):**
 ```env
-VITE_API_BASE_URL=https://52-2-121-88.nip.io/api
+VITE_API_BASE_URL=https://your-api-domain.com/api
 ```
 
-**Backend (AWS EC2):**
+**Backend (Production):**
 ```env
 NODE_ENV=production
 PORT=3000
-DATABASE_URL=postgresql://postgres:****@taskflow-db.ccnoum2y0tyf.us-east-1.rds.amazonaws.com:5432/taskflow
-JWT_SECRET=****
-APP_URL=https://frontend-taskflow-18-three.vercel.app
+DATABASE_URL=postgresql://username:password@your-db-host:5432/database
+JWT_SECRET=your-super-secret-jwt-key
+APP_URL=https://your-frontend-domain.com
 ```
 
 ### Deployment Commands
@@ -268,15 +268,15 @@ APP_URL=https://frontend-taskflow-18-three.vercel.app
 ```bash
 cd frontend
 vercel --prod --yes
-vercel alias <deployment-url> frontend-taskflow-18-three.vercel.app
+vercel alias <deployment-url> your-frontend-domain.vercel.app
 ```
 
 **Backend (AWS):**
 ```bash
 ./deploy-backend.sh
 # OR manually:
-scp -i ~/.ssh/taskflow-key.pem <files> ec2-user@52.2.121.88:/tmp/
-ssh -i ~/.ssh/taskflow-key.pem ec2-user@52.2.121.88
+scp -i ~/.ssh/your-key.pem <files> ec2-user@your-server-ip:/tmp/
+ssh -i ~/.ssh/your-key.pem ec2-user@your-server-ip
 cd /home/ec2-user/Taskflow/backend
 npm run build
 pm2 restart taskflow-api
@@ -293,12 +293,12 @@ pm2 restart taskflow-api
 
 ```bash
 # Check backend status
-ssh -i ~/.ssh/taskflow-key.pem ec2-user@52.2.121.88
+ssh -i ~/.ssh/your-key.pem ec2-user@your-server-ip
 pm2 status taskflow-api
 pm2 logs taskflow-api
 
 # Test API health
-curl https://52-2-121-88.nip.io/api/health
+curl https://your-api-domain.com/api/health
 ```
 
 ## 🛠️ Available Scripts
