@@ -22,4 +22,10 @@ router.get('/current', (req, res) => tenantController.getCurrent(req, res));
  */
 router.put('/current', adminOnly, (req, res) => tenantController.update(req, res));
 
+/**
+ * DELETE /api/tenants/current
+ * Delete current tenant and all associated data (admin only)
+ */
+router.delete('/current', adminOnly, (req, res) => tenantController.delete(req, res));
+
 export default router;

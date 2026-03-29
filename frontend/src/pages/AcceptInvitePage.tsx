@@ -4,6 +4,9 @@ import { useNotification } from '../hooks/useNotification';
 import { useAuth } from '../contexts/AuthContext';
 import { UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
 
+// Get API base URL for invitation endpoints (public, no auth needed)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
 interface InvitationData {
   email: string;
   name: string;
@@ -36,7 +39,7 @@ const AcceptInvitePage = () => {
 
     const validateToken = async () => {
       try {
-        const response = await fetch(`/api/invitations/validate/${token}`);
+        const response = await fetch(`${API_BASE_URL}/invitations/validate/${token}`);
         const data = await response.json();
 
         if (data.success) {
@@ -71,7 +74,7 @@ const AcceptInvitePage = () => {
 
     setSubmitting(true);
     try {
-      const response = await fetch('/api/invitations/accept', {
+      const response = await fetch(`${API_BASE_URL}/invitations/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),

@@ -2,6 +2,7 @@ import { tenantRepository } from '../repositories/TenantRepository';
 import { usageTrackingRepository } from '../repositories/UsageTrackingRepository';
 import { subscriptionService } from './SubscriptionService';
 import { Tenant } from '../types';
+import { db } from '../config/database';
 
 export class TenantService {
   /**
@@ -69,6 +70,29 @@ export class TenantService {
    */
   async update(id: string, data: { name?: string }): Promise<Tenant | null> {
     return tenantRepository.update(id, data);
+  }
+
+  /**
+   * Delete tenant and all associated data
+   * This is a destructive operation that cascades to all related tables
+   */
+  async delete(id: string): Promise<boolean> {
+    // Verify tenant exists
+    const tenant = await tenantRepository.findById(id);
+    if (!tenant) {
+      return false;
+    }
+
+    // The database has ON DELETE CASCADE for all related tables,
+    // so deleting the tenant will automatically delete:
+    // - users
+    // - projects
+    // - tasks
+    // - teams
+    // - subscriptions
+    // - usage_tracking
+    // - invitations
+    return tenantRepository.delete(id);
   }
 }
 

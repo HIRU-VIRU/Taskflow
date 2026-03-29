@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTenant } from '../contexts/TenantContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../api/client';
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export const SettingsPage: React.FC = () => {
   const { addNotification } = useNotification();
   const [tenantName, setTenantName] = useState(tenant?.name || '');
   const [showDangerZone, setShowDangerZone] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleUpdateTenantName = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +22,31 @@ export const SettingsPage: React.FC = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleDeleteTenant = async () => {
+    if (!confirm('Are you absolutely sure? This will permanently delete your organization and all associated data. This action cannot be undone.')) {
+      return;
+    }
+
+    // Double confirmation for destructive action
+    const confirmText = prompt('Type "DELETE" to confirm:');
+    if (confirmText !== 'DELETE') {
+      addNotification('Deletion cancelled', 'info');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await apiClient.delete('/tenants/current');
+      addNotification('Tenant account deleted successfully', 'success');
+      logout();
+      navigate('/login');
+    } catch (error: any) {
+      addNotification(error.message || 'Failed to delete tenant account', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -111,14 +138,11 @@ export const SettingsPage: React.FC = () => {
           </button>
           {showDangerZone && (
             <button
-              onClick={() => {
-                if (confirm('Are you absolutely sure? This cannot be undone.')) {
-                  addNotification('Delete tenant functionality not yet implemented', 'error');
-                }
-              }}
-              className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+              onClick={handleDeleteTenant}
+              disabled={isDeleting}
+              className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Delete Tenant Account
+              {isDeleting ? 'Deleting...' : 'Delete Tenant Account'}
             </button>
           )}
         </section>

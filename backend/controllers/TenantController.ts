@@ -85,6 +85,43 @@ export class TenantController {
       });
     }
   }
+
+  /**
+   * DELETE /api/tenants/current
+   * Delete current tenant (admin only) - DESTRUCTIVE OPERATION
+   */
+  async delete(req: Request, res: Response): Promise<void> {
+    try {
+      const tenantId = req.user!.tenantId;
+
+      const deleted = await tenantService.delete(tenantId);
+
+      if (!deleted) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Tenant not found',
+          },
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: { message: 'Tenant and all associated data have been permanently deleted' },
+      });
+    } catch (error) {
+      console.error('[TenantController] Delete error:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'An error occurred while deleting the tenant',
+        },
+      });
+    }
+  }
 }
 
 export const tenantController = new TenantController();
