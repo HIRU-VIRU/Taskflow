@@ -5,10 +5,10 @@ import { useTenant } from '../contexts/TenantContext';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
 import { teamsApi } from '../api/teams';
+import { usersApi } from '../api/users';
 import { Project, Task, Team } from '../types';
 import { TrendingUp, FolderOpen, CheckSquare, AlertCircle, Users, CreditCard, Loader2 } from 'lucide-react';
 import { AdminOnly, RoleBadge, usePermissions } from '../components/RoleBasedAccess';
-import { tokenUtils } from '../utils/token';
 
 interface User {
   id: string;
@@ -83,41 +83,9 @@ const DashboardPage = () => {
 
     setLoadingAdminData(true);
     try {
-      // Load both plans and users in parallel
-      const [plansResponse, usersResponse] = await Promise.all([
-        fetch('/api/plans', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch('/api/users', {
-          headers: {
-            Authorization: `Bearer ${tokenUtils.getToken()}`,
-            'Content-Type': 'application/json',
-          },
-        })
-      ]);
-
-      if (plansResponse.ok) {
-        // Plans data is no longer stored in state as it's not used in the simplified UI
-      } else {
-        console.error('Failed to fetch plans:', plansResponse.status);
-        if (plansResponse.status === 401) {
-          console.log('User not authenticated - stopping admin data load');
-          return;
-        }
-      }
-
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
-        setUsers(usersData.data?.users || usersData.users || []);
-      } else {
-        console.error('Failed to fetch users:', usersResponse.status);
-        if (usersResponse.status === 401) {
-          console.log('User not authenticated - stopping admin data load');
-          return;
-        }
-      }
+      // Load users using the API client (proper base URL)
+      const usersList = await usersApi.getUsers();
+      setUsers(usersList);
     } catch (error) {
       console.error('Error loading admin data:', error);
     } finally {

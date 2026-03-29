@@ -1,43 +1,55 @@
 import { useEffect, useState, useCallback } from 'react';
 import { usersApi } from '../api/users';
+import { invitationsApi, Invitation } from '../api/invitations';
 import { useTenant } from '../contexts/TenantContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../hooks/useNotification';
 import { User } from '../types';
-import { UserPlus, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { UserPlus, Trash2, RefreshCw, AlertTriangle, Mail, Clock, X } from 'lucide-react';
 
 const UsersPage = () => {
   const { hasFeature } = useTenant();
   const { user: currentUser } = useAuth();
   const { showError, showSuccess } = useNotification();
   const [users, setUsers] = useState<User[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteData, setInviteData] = useState<{ email: string; name: string; role: 'admin' | 'member' }>({ email: '', name: '', role: 'member' });
   const [removingUser, setRemovingUser] = useState<string | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState<string | null>(null);
+  const [cancellingInvite, setCancellingInvite] = useState<string | null>(null);
+  const [resendingInvite, setResendingInvite] = useState<string | null>(null);
 
   const refreshUsers = useCallback(async () => {
     try {
       setRefreshing(true);
-      const data = await usersApi.getUsers();
-      setUsers(data);
+      const [usersData, invitesData] = await Promise.all([
+        usersApi.getUsers(),
+        currentUser?.role === 'admin' ? invitationsApi.getPendingInvitations().catch(() => []) : Promise.resolve([])
+      ]);
+      setUsers(usersData);
+      setInvitations(invitesData);
       showSuccess('Users list refreshed');
     } catch (error: any) {
       showError('Failed to refresh users');
     } finally {
       setRefreshing(false);
     }
-  }, [showError, showSuccess]);
+  }, [showError, showSuccess, currentUser?.role]);
 
   useEffect(() => {
     // Create local function to avoid dependency issues
     const loadUsers = async () => {
       try {
         setLoading(true);
-        const data = await usersApi.getUsers();
-        setUsers(data);
+        const [usersData, invitesData] = await Promise.all([
+          usersApi.getUsers(),
+          currentUser?.role === 'admin' ? invitationsApi.getPendingInvitations().catch(() => []) : Promise.resolve([])
+        ]);
+        setUsers(usersData);
+        setInvitations(invitesData);
       } catch (error: any) {
         showError('Failed to fetch users');
       } finally {
@@ -47,22 +59,22 @@ const UsersPage = () => {
 
     loadUsers();
 
-    // Set up periodic refresh to catch new users
+    // Set up periodic refresh (silent, no notification)
     const intervalId = setInterval(async () => {
       try {
-        setRefreshing(true);
-        const data = await usersApi.getUsers();
-        setUsers(data);
-        showSuccess('Users list refreshed');
+        const [usersData, invitesData] = await Promise.all([
+          usersApi.getUsers(),
+          currentUser?.role === 'admin' ? invitationsApi.getPendingInvitations().catch(() => []) : Promise.resolve([])
+        ]);
+        setUsers(usersData);
+        setInvitations(invitesData);
       } catch (error: any) {
-        showError('Failed to refresh users');
-      } finally {
-        setRefreshing(false);
+        // Silent refresh, ignore errors
       }
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(intervalId);
-  }, []); // Empty dependency array to run only once
+  }, [currentUser?.role]); // Re-run when role changes
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +115,31 @@ const UsersPage = () => {
     } finally {
       setRemovingUser(null);
       setShowRemoveConfirm(null);
+    }
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    setCancellingInvite(invitationId);
+    try {
+      await invitationsApi.cancelInvitation(invitationId);
+      showSuccess('Invitation cancelled');
+      setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
+    } catch (error: any) {
+      showError(error.message || 'Failed to cancel invitation');
+    } finally {
+      setCancellingInvite(null);
+    }
+  };
+
+  const handleResendInvitation = async (invitationId: string) => {
+    setResendingInvite(invitationId);
+    try {
+      await invitationsApi.resendInvitation(invitationId);
+      showSuccess('Invitation resent successfully');
+    } catch (error: any) {
+      showError(error.message || 'Failed to resend invitation');
+    } finally {
+      setResendingInvite(null);
     }
   };
 
@@ -183,25 +220,84 @@ const UsersPage = () => {
         </div>
       )}
 
-      {/* Information message */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-50/50 to-indigo-50/50 backdrop-blur-sm border border-blue-100/50 rounded-2xl p-6 shadow-sm">
-        <div className="absolute top-0 right-0 p-4 opacity-[0.03] -mr-8 -mt-4">
-          <UserPlus className="w-32 h-32" />
-        </div>
-        <div className="flex items-start gap-4 relative">
-          <div className="p-2 bg-blue-100/50 text-blue-600 rounded-xl">
-            <UserPlus className="h-6 w-6 font-bold" />
+      {/* Pending Invitations Section */}
+      {currentUser?.role === 'admin' && invitations.length > 0 && (
+        <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-6 py-4 border-b border-amber-100">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-amber-900 tracking-tight">Pending Invitations</h3>
+                <p className="text-xs text-amber-700">{invitations.length} invitation{invitations.length !== 1 ? 's' : ''} awaiting response</p>
+              </div>
+            </div>
           </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-black text-blue-900 tracking-tight">Pending Invitations</h3>
-            <p className="text-xs font-medium text-blue-700 max-w-2xl leading-relaxed">
-              Users who have been invited but haven't accepted yet won't appear in this list.
-              They will be automatically added once they join the organization. 
-              Click <span className="font-bold underline cursor-pointer hover:text-blue-900" onClick={refreshUsers}>Refresh List</span> to check for updates.
-            </p>
+          <div className="divide-y divide-gray-100">
+            {invitations.map((invitation) => (
+              <div key={invitation.id} className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100 font-bold">
+                    {invitation.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">{invitation.name}</p>
+                    <p className="text-sm text-gray-500">{invitation.email}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                        invitation.role === 'admin'
+                          ? 'bg-purple-50 text-purple-600'
+                          : 'bg-blue-50 text-blue-600'
+                      }`}>
+                        {invitation.role}
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        Expires {new Date(invitation.expires_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleResendInvitation(invitation.id)}
+                    disabled={resendingInvite === invitation.id}
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-all disabled:opacity-50"
+                  >
+                    <Mail className="w-4 h-4" />
+                    {resendingInvite === invitation.id ? 'Sending...' : 'Resend'}
+                  </button>
+                  <button
+                    onClick={() => handleCancelInvitation(invitation.id)}
+                    disabled={cancellingInvite === invitation.id}
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                  >
+                    <X className="w-4 h-4" />
+                    {cancellingInvite === invitation.id ? 'Cancelling...' : 'Revoke'}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Information message when no pending invitations */}
+      {currentUser?.role === 'admin' && invitations.length === 0 && (
+        <div className="relative overflow-hidden bg-gradient-to-r from-blue-50/50 to-indigo-50/50 backdrop-blur-sm border border-blue-100/50 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-start gap-4 relative">
+            <div className="p-2 bg-blue-100/50 text-blue-600 rounded-xl">
+              <UserPlus className="h-6 w-6 font-bold" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-blue-900 tracking-tight">No Pending Invitations</h3>
+              <p className="text-xs font-medium text-blue-700 max-w-2xl leading-relaxed">
+                All sent invitations have been accepted. Use the "Invite New User" button to add more team members.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-gray-500">Loading...</div>

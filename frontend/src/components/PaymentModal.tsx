@@ -33,9 +33,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setIsProcessing(true);
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
       // Call the payment confirmation
       await onConfirmPayment();
 
