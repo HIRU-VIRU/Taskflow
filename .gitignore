@@ -11,6 +11,10 @@ package-lock.json
 deployment-config.md
 deploy-config.*
 .deploy/
+docs/deployment-details.md
+
+# Archive folder (old files)
+archive/
 
 # Build output
 dist/

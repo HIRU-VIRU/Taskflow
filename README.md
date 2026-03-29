@@ -1,305 +1,144 @@
-# TaskFlow - Multi-Tenant Project Management SaaS
+# 🚀 TaskFlow - Multi-Tenant Project Management SaaS
 
-A production-ready multi-tenant Project Management SaaS application with independent backend and frontend projects. Features subscription-based access control with feature entitlements and usage limits.
+A production-ready multi-tenant Project Management SaaS application with subscription-based access control, feature entitlements, and usage limits.
 
-## 🎯 Features
+## 📋 Quick Links
 
-- **Multi-Tenancy**: Complete tenant isolation with shared database architecture
-- **Subscription Management**: Database-driven plans (Free, Pro, Enterprise)
-- **Feature Entitlement**: Fine-grained feature access control
-- **Usage Limiting**: Enforce limits on projects, users, and resources
-- **JWT Authentication**: Stateless authentication for horizontal scalability
-- **Rate Limiting**: Per-tenant request throttling
-- **Clean Architecture**: Controller → Service → Repository pattern
-- **Modern Frontend**: React 18 with TypeScript, Tailwind CSS, and React Router
-- **CORS Enabled**: Cross-origin requests supported for frontend-backend communication
+- 🌐 **[Live Demo](https://frontend-taskflow-18-three.vercel.app)** - Try the application now!
+- 📖 **[Demo Guide](./docs/demo-guide.md)** - Learn how to use the demo
+- 🛠️ **[Development Setup](./docs/development-setup.md)** - Set up locally for development
+
+## ✨ Key Features
+
+- **🏢 Multi-Tenancy**: Complete tenant isolation with shared infrastructure
+- **📊 SaaS Subscriptions**: Database-driven plans with feature & usage controls
+- **🔐 JWT Authentication**: Stateless authentication for scalability
+- **⚡ Modern Stack**: React 18 + TypeScript + Node.js + PostgreSQL
+- **🌐 Production Ready**: Deployed on Vercel + AWS with SSL
+
+## 🏗️ Architecture Overview
+
+```
+┌─────────────────────────────────────────────┐
+│           React Frontend (Vercel)           │
+│         TypeScript + Tailwind CSS          │
+└─────────────────────────────────────────────┘
+                     │ HTTPS/CORS
+                     ▼
+┌─────────────────────────────────────────────┐
+│       Express API Server (AWS EC2)         │
+│   Rate Limiting → Auth → Entitlements      │
+└─────────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────┐
+│       PostgreSQL Database (AWS RDS)        │
+│         Multi-tenant with SSL              │
+└─────────────────────────────────────────────┘
+```
 
 ## 📁 Project Structure
 
 ```
 Taskflow/
-├── backend/                # Backend Node.js/Express API
-│   ├── node_modules/       # Backend dependencies (separate)
-│   ├── package.json        # Backend package configuration
-│   ├── tsconfig.json       # Backend TypeScript config
-│   ├── config/             # Database & env configuration
-│   ├── controllers/        # Request handlers
-│   ├── middleware/         # Express middleware
-│   ├── services/           # Business logic
-│   ├── repositories/       # Database access layer
-│   ├── routes/             # API routes
-│   ├── database/           # Migrations & seeds
-│   └── types/              # TypeScript types
-├── frontend/               # React frontend application
-│   ├── node_modules/       # Frontend dependencies (separate)
-│   ├── package.json        # Frontend package configuration
-│   ├── src/
-│   │   ├── api/            # API client & services
-│   │   ├── components/     # Reusable UI components
-│   │   ├── contexts/       # React contexts (Auth, Tenant, Notifications)
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── pages/          # Page components
-│   │   ├── types/          # TypeScript types
-│   │   └── utils/          # Utility functions
-│   └── public/             # Static assets
-├── scripts/                # Database scripts
-│   ├── knexfile.ts         # Database configuration
-│   └── migrations & seeds  # Database setup files
-├── documents/              # Documentation
-├── package.json            # Root package.json (scripts only, no deps)
-└── README.md               # This file
+├── 📚 docs/                    # Documentation
+│   ├── 🎯 demo-guide.md        # Live demo walkthrough
+│   └── 🛠️ development-setup.md  # Local development guide
+├── 🔧 scripts/                 # Deployment & utility scripts
+├── 🖥️ backend/                 # Node.js API server
+│   ├── controllers/            # Request handlers
+│   ├── services/              # Business logic
+│   ├── repositories/          # Database access
+│   └── middleware/            # Authentication & entitlements
+├── 🌐 frontend/                # React application
+│   ├── src/components/        # UI components
+│   ├── src/contexts/          # State management
+│   └── src/pages/             # Application pages
+└── 📋 package.json             # Root management scripts
 ```
 
-### 🏗️ Clean Architecture
+## 🎯 Subscription Plans
 
-- **Root folder**: Clean with no `node_modules` - only management scripts
-- **Backend**: Independent with its own dependencies in `backend/node_modules/`
-- **Frontend**: Independent with its own dependencies in `frontend/node_modules/`
-- **Separation**: Each project manages its own dependencies and configurations
+| Plan | Price | Projects | Users | Features |
+|------|-------|----------|-------|----------|
+| **Free** | $0/month | 3 | 5 | Basic project management |
+| **Pro** | $29.99/month | 20 | 50 | + User invites, Analytics |
+| **Enterprise** | $99.99/month | Unlimited | Unlimited | + All features |
 
-## 🔄 Project Structure Changes
+## 🚀 Quick Start Options
 
-This project was restructured from a workspace-based monorepo to independent projects for better dependency isolation:
+### Option 1: Try the Live Demo
+1. Visit: [https://frontend-taskflow-18-three.vercel.app](https://frontend-taskflow-18-three.vercel.app)
+2. Follow the [Demo Guide](./docs/demo-guide.md) for login credentials
+3. Explore all SaaS features and multi-tenancy
 
-### Before (Workspace Monorepo)
-```
-├── node_modules/           # Root dependencies (confusing)
-├── package.json            # Workspace config with dependencies
-├── backend/                # No package.json
-└── frontend/               # Own package.json
-```
+### Option 2: Local Development
+1. Follow the [Development Setup Guide](./docs/development-setup.md)
+2. Clone, install dependencies, and start servers
+3. Create your own tenants and test locally
 
-### After (Clean Independent Structure)
-```
-├── package.json            # Scripts only, no dependencies
-├── backend/
-│   ├── package.json        # Backend-specific dependencies
-│   └── node_modules/       # Backend dependencies only
-└── frontend/
-    ├── package.json        # Frontend dependencies
-    └── node_modules/       # Frontend dependencies only
-```
+## 🔐 Security & Best Practices
 
-### Benefits
-- ✅ **Clean root**: No dependency pollution in project root
-- ✅ **True isolation**: Each project manages its own dependencies
-- ✅ **Easier deployment**: Backend and frontend can be deployed independently
-- ✅ **Better debugging**: Clear dependency boundaries
-- ✅ **Simpler CI/CD**: Build each project separately
+- ✅ **JWT Authentication** with configurable expiration
+- ✅ **Password Hashing** with bcrypt (10 rounds)
+- ✅ **Tenant Isolation** at database layer (all queries include tenant_id)
+- ✅ **Rate Limiting** per tenant with configurable limits
+- ✅ **Input Validation** with Zod schemas
+- ✅ **SQL Injection Prevention** with parameterized queries
+- ✅ **CORS Protection** with origin whitelisting
+- ✅ **HTTPS Everywhere** in production with Let's Encrypt
 
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- Docker (for PostgreSQL)
-- Git
-
-### 1. Clone and Install Dependencies
+## 🛠️ Management Commands
 
 ```bash
-git clone https://github.com/HIRU-VIRU/Taskflow.git
-cd Taskflow
+# Install dependencies
+npm run install:all          # Install both backend & frontend
 
-# Install backend dependencies
-npm run backend:install
-# OR: cd backend && npm install
+# Development
+npm run dev                  # Start backend server
+npm run frontend:dev         # Start frontend server
 
-# Install frontend dependencies
-npm run frontend:install
-# OR: cd frontend && npm install
+# Database
+npm run db:start            # Start PostgreSQL (Docker)
+npm run db:setup            # Run migrations & seeds
 
-# Install both with one command
-npm run install:all
+# Build & Deploy
+npm run build:all           # Build both projects
+./scripts/deploy-backend.sh # Deploy to production
 ```
 
-### 2. Database Setup
+## 🎨 Technical Highlights
 
-#### Start PostgreSQL with Docker
+### Clean Architecture
+- **Controller → Service → Repository** pattern
+- **Centralized Entitlement Service** for feature gating
+- **Database-driven subscriptions** (no hardcoded plans)
 
-```bash
-# Start PostgreSQL container (first time)
-npm run db:start
+### Modern Frontend
+- **React 18** with TypeScript for type safety
+- **Tailwind CSS** for responsive design
+- **React Router** for client-side routing
+- **Context API** for state management
 
-# This runs:
-# docker run --name taskflow-db \
-#   -e POSTGRES_USER=postgres \
-#   -e POSTGRES_PASSWORD=postgres \
-#   -e POSTGRES_DB=taskflow \
-#   -p 5432:5432 -d postgres:16-alpine
-```
+### Scalable Backend
+- **Express.js** with TypeScript
+- **Knex.js** for database migrations & queries
+- **JWT** for stateless authentication
+- **Rate limiting** and request timeout protection
 
-#### Database Troubleshooting
+## 📄 License
 
-**If you get "container name already in use" error:**
+MIT License - Feel free to use this project as a template for your own SaaS applications.
 
-```bash
-# Check if container exists but is stopped
-docker ps -a | grep taskflow-db
+## 🌟 Built With
 
-# Start existing container
-docker start taskflow-db
+**Frontend:** React 18 • TypeScript • Tailwind CSS • Vite
+**Backend:** Node.js • Express • PostgreSQL • Knex.js
+**Infrastructure:** Vercel • AWS EC2 • AWS RDS • Let's Encrypt
 
-# OR remove and recreate (loses data)
-docker rm taskflow-db
-npm run db:start
-```
+---
 
-**Check database status:**
-
-```bash
-# Check if container is running
-docker ps | grep taskflow-db
-
-# View database logs
-docker logs taskflow-db --tail 10
-
-# Connect to database (optional)
-docker exec -it taskflow-db psql -U postgres -d taskflow
-```
-
-### 3. Environment Setup
-
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
-
-The default `backend/.env` works with Docker PostgreSQL:
-
-```env
-NODE_ENV=development
-PORT=3000
-
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=taskflow
-
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
-JWT_EXPIRES_IN=24h
-
-RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_MAX=100
-```
-
-### 4. Setup Database
-
-```bash
-# Run migrations and seed data
-npm run db:setup
-
-# Or run from backend directory:
-cd backend && npm run migrate && npm run seed
-```
-
-### 5. Start Development Servers
-
-**Option A: Using root scripts**
-
-**Terminal 1 - Backend (port 3000):**
-```bash
-npm run dev
-# OR: npm run backend:dev
-```
-
-**Terminal 2 - Frontend (port 5173):**
-```bash
-npm run frontend:dev
-```
-
-**Option B: Starting from directories**
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-npm run dev
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm run dev
-```
-
-### 6. Access the Application
-
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:3000/api
-- **CORS**: Enabled for localhost:5173 → localhost:3000 requests
-
-## 🚀 Production Deployment
-
-### Current Production Setup
-
-| Component | Platform | URL | Configuration |
-|-----------|----------|-----|---------------|
-| **Frontend** | Vercel | https://your-frontend.vercel.app | Auto-deploy from main branch |
-| **Backend API** | AWS EC2 | https://your-api-domain.com/api | nginx + Node.js + PM2 |
-| **Database** | AWS RDS | PostgreSQL with SSL | Multi-AZ, encrypted |
-
-### SSL Configuration
-
-- **Frontend**: Automatic HTTPS via Vercel
-- **Backend**: Let's Encrypt certificate via nip.io domain
-- **API Domain**: `your-ip.nip.io` (resolves to your server IP)
-- **Certificate**: Auto-renewal enabled via certbot
-
-### Environment Variables
-
-**Frontend (.env.production):**
-```env
-VITE_API_BASE_URL=https://your-api-domain.com/api
-```
-
-**Backend (Production):**
-```env
-NODE_ENV=production
-PORT=3000
-DATABASE_URL=postgresql://username:password@your-db-host:5432/database
-JWT_SECRET=your-super-secret-jwt-key
-APP_URL=https://your-frontend-domain.com
-```
-
-### Deployment Commands
-
-**Frontend (Vercel):**
-```bash
-cd frontend
-vercel --prod --yes
-vercel alias <deployment-url> your-frontend-domain.vercel.app
-```
-
-**Backend (AWS):**
-```bash
-./deploy-backend.sh
-# OR manually:
-scp -i ~/.ssh/your-key.pem <files> ec2-user@your-server-ip:/tmp/
-ssh -i ~/.ssh/your-key.pem ec2-user@your-server-ip
-cd /home/ec2-user/Taskflow/backend
-npm run build
-pm2 restart taskflow-api
-```
-
-### AWS Infrastructure
-
-- **EC2 Instance**: t3.micro (1 vCPU, 1GB RAM)
-- **RDS Database**: PostgreSQL 16, Multi-AZ
-- **Security Groups**: Port 443 (HTTPS), 22 (SSH)
-- **SSL**: nginx reverse proxy with Let's Encrypt
-
-### Monitoring
-
-```bash
-# Check backend status
-ssh -i ~/.ssh/your-key.pem ec2-user@your-server-ip
-pm2 status taskflow-api
-pm2 logs taskflow-api
-
-# Test API health
-curl https://your-api-domain.com/api/health
-```
+**Ready to explore?** 🚀 Start with the [Live Demo](https://frontend-taskflow-18-three.vercel.app) or [Development Setup](./docs/development-setup.md)!
 
 ## 🛠️ Available Scripts
 
