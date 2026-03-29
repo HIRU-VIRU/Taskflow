@@ -84,5 +84,5 @@ ENDSSH
 
 echo ""
 echo "✨ Backend deployed successfully!"
-echo "🌐 API URL: https://52.2.121.88.nip.io/api/health"
+echo "🌐 API URL: https://52-2-121-88.nip.io/api/health"
 echo ""

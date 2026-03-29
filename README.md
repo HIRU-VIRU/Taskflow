@@ -229,6 +229,78 @@ npm run dev
 - **Backend API**: http://localhost:3000/api
 - **CORS**: Enabled for localhost:5173 → localhost:3000 requests
 
+## 🚀 Production Deployment
+
+### Current Production Setup
+
+| Component | Platform | URL | Configuration |
+|-----------|----------|-----|---------------|
+| **Frontend** | Vercel | https://frontend-taskflow-18-three.vercel.app | Auto-deploy from main branch |
+| **Backend API** | AWS EC2 | https://52-2-121-88.nip.io/api | nginx + Node.js + PM2 |
+| **Database** | AWS RDS | PostgreSQL with SSL | Multi-AZ, encrypted |
+
+### SSL Configuration
+
+- **Frontend**: Automatic HTTPS via Vercel
+- **Backend**: Let's Encrypt certificate via nip.io domain
+- **API Domain**: `52-2-121-88.nip.io` (resolves to 52.2.121.88)
+- **Certificate**: Auto-renewal enabled via certbot
+
+### Environment Variables
+
+**Frontend (.env.production):**
+```env
+VITE_API_BASE_URL=https://52-2-121-88.nip.io/api
+```
+
+**Backend (AWS EC2):**
+```env
+NODE_ENV=production
+PORT=3000
+DATABASE_URL=postgresql://postgres:****@taskflow-db.ccnoum2y0tyf.us-east-1.rds.amazonaws.com:5432/taskflow
+JWT_SECRET=****
+APP_URL=https://frontend-taskflow-18-three.vercel.app
+```
+
+### Deployment Commands
+
+**Frontend (Vercel):**
+```bash
+cd frontend
+vercel --prod --yes
+vercel alias <deployment-url> frontend-taskflow-18-three.vercel.app
+```
+
+**Backend (AWS):**
+```bash
+./deploy-backend.sh
+# OR manually:
+scp -i ~/.ssh/taskflow-key.pem <files> ec2-user@52.2.121.88:/tmp/
+ssh -i ~/.ssh/taskflow-key.pem ec2-user@52.2.121.88
+cd /home/ec2-user/Taskflow/backend
+npm run build
+pm2 restart taskflow-api
+```
+
+### AWS Infrastructure
+
+- **EC2 Instance**: t3.micro (1 vCPU, 1GB RAM)
+- **RDS Database**: PostgreSQL 16, Multi-AZ
+- **Security Groups**: Port 443 (HTTPS), 22 (SSH)
+- **SSL**: nginx reverse proxy with Let's Encrypt
+
+### Monitoring
+
+```bash
+# Check backend status
+ssh -i ~/.ssh/taskflow-key.pem ec2-user@52.2.121.88
+pm2 status taskflow-api
+pm2 logs taskflow-api
+
+# Test API health
+curl https://52-2-121-88.nip.io/api/health
+```
+
 ## 🛠️ Available Scripts
 
 ### Root Management Scripts
